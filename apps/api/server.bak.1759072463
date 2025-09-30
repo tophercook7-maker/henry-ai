@@ -1,0 +1,352 @@
+// server.js — settings + usage + cap + model fallback + identity
+import express from 'express';
+import cors from 'cors';
+import dotenv from 'dotenv';
+import fs from 'fs';
+import path from 'path';
+import rateLimit from 'express-rate-limit';
+import { fileURLToPath } from 'url';
+
+dotenv.config();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const CONFIG_PATH = path.join(__dirname, 'config.json');
+
+function loadConfig() { try { return JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf8')); } catch { return {}; } }
+function saveConfig(obj) { fs.writeFileSync(CONFIG_PATH, JSON.stringify(obj, null, 2)); }
+
+let config = loadConfig();
+
+// precedence from env if present
+if (process.env.OPENAI_API_KEY) config.OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+if (process.env.OPENAI_MODEL)   config.OPENAI_MODEL   = process.env.OPENAI_MODEL;
+if (process.env.STRIPE_PORTAL_URL) config.STRIPE_PORTAL_URL = process.env.STRIPE_PORTAL_URL;
+
+// defaults
+if (!config.PRICING) config.PRICING = { input_per_1k: 0.00015, output_per_1k: 0.0006 };
+if (typeof config.SPEND_CAP_USD !== 'number') config.SPEND_CAP_USD = 5;
+if (typeof config.ENFORCE_CAP !== 'boolean') config.ENFORCE_CAP = true;
+if (!config.USAGE) config.USAGE = {};
+if (!config.LAST_USED_MODEL) config.LAST_USED_MODEL = null;
+if (!config.IDENTITY) config.IDENTITY = "You are Henry. When the user asks who you are or on first greeting, introduce yourself: “I’m Henry, an AI program that helps you chat, test ideas, and wire up tools.” Keep replies friendly and concise.";
+
+// helpers
+function ym(d=new Date()) { return d.toISOString().slice(0,7); }
+function ensureMonth(m=ym()) {
+  if (!config.USAGE[m]) config.USAGE[m] = { requests: 0, prompt_tokens: 0, completion_tokens: 0, estimated_tokens: 0, spend_estimate_usd: 0 };
+  return config.USAGE[m];
+}
+function estCost(promptTok, completionTok) {
+  const inRate = Number(config.PRICING.input_per_1k || 0);
+  const outRate = Number(config.PRICING.output_per_1k || 0);
+  return (promptTok * inRate + completionTok * outRate) / 1000;
+}
+function addUsage({ prompt_tokens=0, completion_tokens=0, estimated_tokens=0 }) {
+  const month = ensureMonth();
+  month.requests += 1;
+  month.prompt_tokens += Math.max(0, Math.round(prompt_tokens));
+  month.completion_tokens += Math.max(0, Math.round(completion_tokens));
+  month.estimated_tokens += Math.max(0, Math.round(estimated_tokens));
+  const costInc = estCost(prompt_tokens||0, completion_tokens||0);
+  month.spend_estimate_usd = Number((month.spend_estimate_usd + costInc).toFixed(6));
+  saveConfig(config);
+  return month;
+}
+function totalSpendThisMonth() { return ensureMonth().spend_estimate_usd; }
+function capHit() { return config.ENFORCE_CAP && totalSpendThisMonth() >= Number(config.SPEND_CAP_USD || 0); }
+
+// app
+const app = express();
+app.use(cors({ origin: true }));
+app.use(express.json({ limit: '1mb' }));
+app.set('x-powered-by', false);
+app.use(rateLimit({ windowMs: 60_000, limit: 180 }));
+
+// health/settings (now includes IDENTITY)
+app.get('/health', (_req, res) => {
+  res.json({
+    ok: true,
+    model: config.OPENAI_MODEL || 'gpt-4o-mini',
+    hasKey: !!config.OPENAI_API_KEY,
+    billing: !!config.STRIPE_PORTAL_URL,
+    month: ym(),
+    capUsd: config.SPEND_CAP_USD,
+    enforceCap: !!config.ENFORCE_CAP,
+    spendUsd: ensureMonth().spend_estimate_usd,
+    lastUsedModel: config.LAST_USED_MODEL
+  });
+});
+app.get('/settings', (_req, res) => {
+  res.json({
+    OPENAI_MODEL: config.OPENAI_MODEL || 'gpt-4o-mini',
+    OPENAI_API_KEY: config.OPENAI_API_KEY ? '***' + config.OPENAI_API_KEY.slice(-4) : null,
+    STRIPE_PORTAL_URL: config.STRIPE_PORTAL_URL ? 'set' : null,
+    PRICING: config.PRICING,
+    SPEND_CAP_USD: config.SPEND_CAP_USD,
+    ENFORCE_CAP: !!config.ENFORCE_CAP,
+    IDENTITY: config.IDENTITY
+  });
+});
+app.post('/settings', (req, res) => {
+  const { OPENAI_API_KEY, OPENAI_MODEL, STRIPE_PORTAL_URL, PRICING, SPEND_CAP_USD, ENFORCE_CAP, IDENTITY } = req.body || {};
+  if (OPENAI_MODEL) config.OPENAI_MODEL = String(OPENAI_MODEL);
+  if (OPENAI_API_KEY) config.OPENAI_API_KEY = String(OPENAI_API_KEY);
+  if (STRIPE_PORTAL_URL) config.STRIPE_PORTAL_URL = String(STRIPE_PORTAL_URL);
+  if (PRICING && typeof PRICING === 'object') {
+    const p = PRICING;
+    if (p.input_per_1k != null) config.PRICING.input_per_1k = Number(p.input_per_1k);
+    if (p.output_per_1k != null) config.PRICING.output_per_1k = Number(p.output_per_1k);
+  }
+  if (SPEND_CAP_USD != null) config.SPEND_CAP_USD = Number(SPEND_CAP_USD);
+  if (ENFORCE_CAP != null) config.ENFORCE_CAP = !!ENFORCE_CAP;
+  if (IDENTITY) config.IDENTITY = String(IDENTITY);
+  saveConfig(config);
+  res.json({ ok: true });
+});
+
+// usage endpoints
+app.get('/usage', (_req, res) => {
+  const m = ym();
+  res.json({
+    month: m,
+    usage: ensureMonth(m),
+    pricing: config.PRICING,
+    capUsd: config.SPEND_CAP_USD,
+    enforceCap: !!config.ENFORCE_CAP
+  });
+});
+app.post('/usage/cap', (req, res) => {
+  const { capUsd, enforce } = req.body || {};
+  if (capUsd != null) config.SPEND_CAP_USD = Number(capUsd);
+  if (enforce != null) config.ENFORCE_CAP = !!enforce;
+  saveConfig(config);
+  res.json({ ok: true, capUsd: config.SPEND_CAP_USD, enforceCap: !!config.ENFORCE_CAP });
+});
+app.post('/usage/reset', (_req, res) => {
+  config.USAGE[ym()] = { requests: 0, prompt_tokens: 0, completion_tokens: 0, estimated_tokens: 0, spend_estimate_usd: 0 };
+  saveConfig(config);
+  res.json({ ok: true, month: ym(), usage: ensureMonth() });
+});
+
+// model fallback helpers (gpt-5 -> gpt-4o-mini)
+async function fetchJSON(url, opts) {
+  const r = await fetch(url, opts);
+  const text = await r.text();
+  let json = null; try { json = text ? JSON.parse(text) : null; } catch {}
+  return { ok: r.ok, status: r.status, json, text };
+}
+function approxTokMsgs(messages=[]) { const chars = messages.reduce((s,m)=>s+String(m?.content||'').length, 0); return Math.ceil(chars/4); }
+function approxTokText(text='') { return Math.ceil(String(text).length/4); }
+function modelOrder(requested, configured) {
+  const base = ['gpt-5', 'gpt-4o-mini'];
+  const extra = configured && !base.includes(configured) ? [configured] : [];
+  if (requested && !base.includes(requested)) return [requested, ...base, ...extra];
+  return [...new Set([requested || 'gpt-5', ...base, ...extra])].filter(Boolean);
+}
+async function tryCompletion({key, messages, temperature=0.7, modelList}) {
+  let lastErr=null;
+  for (const m of modelList) {
+    const resp = await fetchJSON('https://api.openai.com/v1/chat/completions', {
+      method:'POST', headers:{Authorization:`Bearer ${key}`,'Content-Type':'application/json'},
+      body: JSON.stringify({ model:m, messages, temperature })
+    });
+    if (resp.ok && resp.json) return { model:m, data:resp.json };
+    lastErr = resp;
+    const msg=(resp.json?.error?.message||resp.text||'').toLowerCase();
+    const code=(resp.json?.error?.code||'').toLowerCase();
+    if (!(code.includes('model') || msg.includes('model') || msg.includes('not found') || msg.includes('unsupported'))) break;
+  }
+  return { error:lastErr };
+}
+async function tryStream({key, messages, temperature=0.7, modelList}) {
+  let lastDetail=null;
+  for (const m of modelList) {
+    const upstream = await fetch('https://api.openai.com/v1/chat/completions', {
+      method:'POST', headers:{Authorization:`Bearer ${key}`,'Content-Type':'application/json'},
+      body: JSON.stringify({ model:m, messages, temperature, stream:true })
+    });
+    if (upstream.ok && upstream.body) return { model:m, stream:upstream.body };
+    const text = await upstream.text().catch(()=> ''); lastDetail={ status:upstream.status, text };
+    const low=(text||'').toLowerCase();
+    if (!(low.includes('model') || low.includes('not found') || low.includes('unsupported'))) break;
+  }
+  return { error:lastDetail };
+}
+
+// message builder: inject identity if caller didn't provide a system message
+function withIdentity(messages, systemText) {
+  const hasSystem = Array.isArray(messages) && messages.some(m => (m?.role||'').toLowerCase()==='system');
+  if (hasSystem) return messages;
+  return [{ role:'system', content: systemText }, ...messages];
+}
+
+// chat (non-stream)
+app.post('/chat', async (req, res) => {
+  try {
+    if (capHit()) return res.status(402).json({ error:'spend_cap_reached', capUsd:config.SPEND_CAP_USD, month:ym() });
+    const body = req.body || {};
+    const key = config.OPENAI_API_KEY || '';
+    const configured = config.OPENAI_MODEL || 'gpt-4o-mini';
+    const order = modelOrder(body.model, configured);
+
+    let messages = Array.isArray(body.messages) ? body.messages : [];
+    if (!messages.length) {
+      const single = (body.message ?? '').toString();
+      if (!single.trim()) return res.status(400).json({ error:'message is required' });
+      if (body.system) messages.push({ role:'system', content:String(body.system) });
+      messages.push({ role:'user', content: single });
+    }
+    messages = withIdentity(messages, config.IDENTITY);
+
+    if (!key) {
+      const lastUser = [...messages].reverse().find(m => m.role==='user')?.content ?? '';
+      addUsage({ estimated_tokens: approxTokMsgs(messages)+approxTokText(lastUser) });
+      config.LAST_USED_MODEL='echo'; saveConfig(config);
+      return res.json({ reply:`echo: ${lastUser}`, provider:'echo' });
+    }
+
+    const result = await tryCompletion({ key, messages, modelList:order });
+    if (result?.data) {
+      const data = result.data;
+      const choice = data?.choices?.[0] ?? {};
+      let reply = '';
+      if (typeof choice?.message?.content === 'string') reply = choice.message.content;
+      else if (typeof choice?.delta?.content === 'string') reply = choice.delta.content;
+      else if (typeof choice?.text === 'string') reply = choice.text;
+      else if (Array.isArray(choice?.message?.content)) reply = choice.message.content.map(p=>p?.text ?? p?.content ?? '').join('').trim();
+
+      const pt = data?.usage?.prompt_tokens ?? 0;
+      const ct = data?.usage?.completion_tokens ?? 0;
+      if (pt || ct) addUsage({ prompt_tokens:pt, completion_tokens:ct });
+      else addUsage({ estimated_tokens: approxTokMsgs(messages)+approxTokText(reply) });
+
+      config.LAST_USED_MODEL=result.model; saveConfig(config);
+      return res.json({ reply: reply || '(no content)', provider:'openai', model: result.model });
+    }
+    const err = result?.error || {};
+    return res.status(502).json({ error:'upstream_error', detail:(err.text||'').slice(0,1500) });
+  } catch (err) {
+    console.error('POST /chat error', err);
+    return res.status(500).json({ error:'server_error' });
+  }
+});
+
+// chat stream (SSE)
+app.post('/chat/stream', async (req, res) => {
+  try {
+    if (capHit()) { res.set({'Content-Type':'text/event-stream'}); res.write(`event: error\ndata: spend_cap_reached\n\n`); return res.end(); }
+    const body = req.body || {};
+    const key = config.OPENAI_API_KEY || '';
+    const configured = config.OPENAI_MODEL || 'gpt-4o-mini';
+    const order = modelOrder(body.model, configured);
+
+    let messages = Array.isArray(body.messages) ? body.messages : [];
+    if (!messages.length) {
+      const single = (body.message ?? '').toString();
+      if (!single.trim()) { res.set({'Content-Type':'text/event-stream'}); res.write(`event: error\ndata: message required\n\n`); return res.end(); }
+      if (body.system) messages.push({ role:'system', content:String(body.system) });
+      messages.push({ role:'user', content: single });
+    }
+    messages = withIdentity(messages, config.IDENTITY);
+
+    res.set({ 'Content-Type':'text/event-stream', 'Cache-Control':'no-cache, no-transform', Connection:'keep-alive', 'X-Accel-Buffering':'no' });
+    res.flushHeaders?.();
+
+    const send = (d) => res.write(`data: ${d}\n\n`);
+    const event = (e, d) => res.write(`event: ${e}\ndata: ${d}\n\n`);
+
+    if (!key) {
+      const lastUser = [...messages].reverse().find(m => m.role==='user')?.content ?? '';
+      for (const ch of (`echo: ${lastUser}`)) { send(ch); await new Promise(r => setTimeout(r, 8)); }
+      addUsage({ estimated_tokens: approxTokMsgs(messages) + approxTokText(lastUser) });
+      config.LAST_USED_MODEL='echo'; saveConfig(config);
+      event('done', JSON.stringify({ provider:'echo' })); return res.end();
+    }
+
+    const attempt = await tryStream({ key, messages, modelList:order });
+    if (attempt?.stream) {
+      const reader = attempt.stream.getReader();
+      const td = new TextDecoder();
+      let outChars = 0;
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        const chunk = td.decode(value);
+        for (const line of chunk.split('\n')) {
+          if (!line.trim()) continue;
+          if (line.startsWith('data:')) {
+            const payload = line.slice(5).trim();
+            try { if (payload && payload !== '[DONE]') { const obj = JSON.parse(payload); const piece = obj?.choices?.[0]?.delta?.content ?? ''; outChars += (piece||'').length; } }
+            catch { outChars += payload.length; }
+            res.write(line + '\n\n');
+          }
+        }
+      }
+      const inEst = approxTokMsgs(messages);
+      const outEst = Math.ceil(outChars/4);
+      addUsage({ estimated_tokens: inEst + outEst });
+      config.LAST_USED_MODEL=attempt.model; saveConfig(config);
+      event('done', JSON.stringify({ provider:'openai', model: attempt.model })); return res.end();
+    }
+    const det = attempt?.error || {};
+    event('error', (det.text || 'upstream_error').slice(0,1000)); return res.end();
+  } catch (err) {
+    console.error('POST /chat/stream error', err);
+    res.write(`event: error\ndata: server_error\n\n`); res.end();
+  }
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`API listening on :${PORT}`));
+// --- open-terminal route ---
+});
+
+// --- Open native macOS Terminal.app ---
+app.get('/open-terminal', async (req, res) => {
+  try {
+    _exec('open -a Terminal', (err) => {
+      if (err) {
+        console.error('Failed to open Terminal:', err);
+        return res.status(500).send('Failed to open Terminal');
+      }
+      res.send('Terminal.app opened!');
+    });
+  } catch (e) {
+    console.error(e);
+    res.status(500).send('Failed to open Terminal');
+  }
+});
+
+// --- Return first ~200KB of a text-like uploaded file for summarization ---
+app.get('/files/text/:name', async (req, res) => {
+  try {
+    const uploadDir = path.join(process.env.HOME || process.cwd(), 'henry', 'data', 'uploads');
+    const name = req.params.name;
+    const filePath = path.join(uploadDir, name);
+    if (!filePath.startsWith(uploadDir)) return res.status(400).send('bad path');
+    if (!fs.existsSync(filePath)) return res.status(404).send('not found');
+
+    // Allow only texty extensions or when sniffing as text
+    const lower = name.toLowerCase();
+    const looksText = /\.(txt|md|csv|json|log|yaml|yml|xml)$/i.test(lower);
+    if (!looksText) return res.status(415).send('unsupported: not a text file');
+
+    const MAX = 200 * 1024; // 200KB cap to keep prompts sane
+    const buf = fs.readFileSync(filePath);
+    const out = buf.slice(0, MAX).toString('utf8');
+    res.json({ name, bytes: Math.min(buf.length, MAX), totalBytes: buf.length, content: out });
+  } catch (e) {
+    res.status(500).send(typeof e?.message === 'string' ? e.message : 'server error');
+  }
+});
+
+app.use(pdfExtractRoutes);
+
+app.use(filesRoutes);
+app.use((err, req, res, next)=>{
+  const code = err?.status || 500;
+  const msg = (typeof err?.message === 'string' ? err.message : String(err||'server error'));
+  console.error('API error:', code, msg);
+  res.status(code).json({ error: msg });
+});

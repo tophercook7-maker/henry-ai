@@ -1,0 +1,155 @@
+import { fetch as undiciFetch } from "undici";
+if (typeof fetch === "undefined") { globalThis.fetch = undiciFetch; }
+import express from 'express';
+import cors from 'cors';
+import path from 'node:path';
+import fs from 'node:fs';
+import os from 'node:os';
+import { exec as _exec } from 'node:child_process';
+
+// ---- Load OPENAI_API_KEY from ~/.henry/secret.env if not set
+try {
+  if (!process.env.OPENAI_API_KEY) {
+    const p = `${os.homedir()}/.henry/secret.env`;
+    if (fs.existsSync(p)) {
+      const t = fs.readFileSync(p, 'utf8');
+      const m = t.match(/OPENAI_API_KEY\s*=\s*(.+)\s*$/m);
+      if (m) process.env.OPENAI_API_KEY = m[1].trim();
+    }
+  }
+} catch {}
+
+import filesRoutes from './routes/files.mjs';
+import pdfExtractRoutes from './routes/pdf-extract.mjs';
+import chatRoutes from './routes/chat.mjs';
+
+const app = express();
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true }));
+app.use(cors());
+
+app.get('/health', (req,res)=>res.json({ ok:true, ts: Date.now() }));
+
+app.get('/open-terminal', (req, res) => {
+  _exec('open -a Terminal', (err) => {
+    if (err) return res.status(500).send('Failed to open Terminal');
+    res.send('Terminal.app opened!');
+  });
+});
+
+app.get('/files/text/:name', (req, res) => {
+  try{
+    const uploadDir = path.join(process.env.HOME || process.cwd(), 'henry', 'data', 'uploads');
+    const name = req.params.name;
+    const p = path.join(uploadDir, name);
+    if (!p.startsWith(uploadDir)) return res.status(400).send('bad path');
+    if (!fs.existsSync(p)) return res.status(404).send('not found');
+    if (!/\.(txt|md|csv|json|log|ya?ml|xml)$/i.test(name)) return res.status(415).send('unsupported');
+    const buf = fs.readFileSync(p);
+    const slice = buf.slice(0, 200*1024).toString('utf8');
+    res.json({ name, bytes: slice.length, totalBytes: buf.length, content: slice });
+  }catch(e){ res.status(500).send(typeof e?.message==='string'?e.message:'server error'); }
+});
+
+app.use(filesRoutes);
+app.use(pdfExtractRoutes);
+app.use((req,res,next)=>{ try{ if(req.path && req.path.startsWith("/chat/")){ const hdr=req.get("x-api-key")||""; const env=process.env.OPENAI_API_KEY||""; const key=hdr||env||""; const src=hdr?"header":(env?"env":"none"); const last4=key?key.slice(-4):""; console.log(`CHAT KEY src= last4=`); } }catch(_){} next(); });
+app.use(chatRoutes);
+
+app.use((err, req, res, next)=>{
+  const code = err?.status || 500;
+  const msg = (typeof err?.message === 'string' ? err.message : String(err||'server error'));
+  console.error('API error:', code, msg);
+  res.status(code).json({ error: msg });
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, ()=>console.log(`henry-api listening on http://127.0.0.1:${PORT}`));
+
+// Lightweight verification: which key is used, and does OpenAI accept it?
+app.get('/key-verify', async (req, res) => {
+  try {
+    const hdr = req.get('x-api-key') || '';
+    const env = process.env.OPENAI_API_KEY || '';
+    const key = hdr || env || '';
+    const source = hdr ? 'header' : (env ? 'env' : 'none');
+    const masked = key ? `sk-****${key.slice(-4)}` : '';
+
+    if (!key) return res.status(400).json({ ok:false, source, masked, status:400, reason:'no key available' });
+
+    // Minimal probe to OpenAI: list models (fast and simple)
+    const r = await fetch('https://api.openai.com/v1/models', {
+      method: 'GET',
+      headers: { 'Authorization': `Bearer ${key}` }
+    });
+
+    let info = {};
+    try { info = await r.json(); } catch {}
+    res.status(r.status).json({
+      ok: r.ok,
+      source,
+      masked,
+      status: r.status,
+      reason: info?.error?.message || info?.message || r.statusText || 'unknown',
+      openai_code: info?.error?.code || null
+    });
+  } catch (e) {
+    res.status(500).json({ ok:false, status:500, reason: String(e?.message||e) });
+  }
+});
+
+// Inspect incoming headers + which key will be used
+app.get('/debug/echo-headers', (req,res)=>{
+  const hdr = req.get('x-api-key') || '';
+  const env = process.env.OPENAI_API_KEY || '';
+  const src = hdr ? 'header' : (env ? 'env' : 'none');
+  const last4 = (hdr || env || '').slice(-4);
+  res.json({ src, last4, hasHeader: !!hdr, hasEnv: !!env, headers: req.headers });
+});
+
+// --- Admin: set server OpenAI key (LOCAL DEV ONLY) ---
+    const os = await import(node:os);
+    const fs = await import(node:fs);
+    const path = `${os.homedir()}/.henry`; fs.mkdirSync(path,{recursive:true});
+    fs.writeFileSync(`${path}/secret.env`, `OPENAI_API_KEY=${key}\n`, {mode:0o600});
+    process.env.OPENAI_API_KEY = key;
+    res.json({ ok:true, masked: `sk-****${key.slice(-4)}` });
+  } catch(e){ res.status(500).json({ ok:false, error: String(e?.message||e) }); }
+});
+
+// key status (masked)
+app.get('/key-status',(req,res)=>{
+  const hdr=req.get('x-api-key')||''; const env=process.env.OPENAI_API_KEY||'';
+  const src = hdr ? 'header' : (env ? 'env' : 'none');
+  const key = hdr || env || '';
+  res.json({ ok:true, source:src, masked: key?`sk-****${key.slice(-4)}`:'' });
+});
+// verify against OpenAI
+app.get('/key-verify', async (req,res)=>{
+  try{
+    const k=req.get('x-api-key')||process.env.OPENAI_API_KEY||'';
+    if(!k) return res.status(400).json({ok:false, reason:'no key'});
+    const r=await fetch('https://api.openai.com/v1/models',{headers:{Authorization:`Bearer ${k}`}}); 
+    const j=await r.json().catch(()=>({}));
+    res.status(r.status).json({ ok:r.ok, status:r.status, reason:j?.error?.message||r.statusText, code:j?.error?.code||null });
+  }catch(e){ res.status(500).json({ ok:false, reason:String(e?.message||e) }); }
+});
+
+// --- Admin: set server OpenAI key (LOCAL DEV ONLY) ---
+app.post('/admin/set-key', async (req, res) => {
+  try {
+    const key = String(req.body?.key || '').trim();
+    if (!key || !/^sk-[A-Za-z0-9_-]{10,}$/.test(key)) {
+      return res.status(400).json({ ok:false, error:'bad key format' });
+    }
+    const os = await import('node:os');
+    const fs = await import('node:fs');
+    const dir = `${os.homedir()}/.henry`;
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(`${dir}/secret.env`, `OPENAI_API_KEY=${key}\n`, { mode: 0o600 });
+    process.env.OPENAI_API_KEY = key; // hot-load for current process
+    res.json({ ok:true, masked: `sk-****${key.slice(-4)}` });
+  } catch (e) {
+    res.status(500).json({ ok:false, error: String(e?.message || e) });
+  }
+});

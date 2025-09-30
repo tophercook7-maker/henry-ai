@@ -1,0 +1,41 @@
+#!/usr/bin/env zsh
+set -euo pipefail
+
+API_DIR="$HOME/henry/apps/api"
+API_URL="http://127.0.0.1:3000"
+
+print -n "Enter your OpenAI API key (starts with sk-): "
+stty -echo
+read KEY
+stty echo
+print ""
+
+# Trim stray whitespace/newlines
+KEY="$(printf '%s' "$KEY" | tr -d '\r' | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
+
+case "$KEY" in
+  sk-*) ;;
+  *) print "❌ That doesn't look like an sk- key. Aborting."; exit 1;;
+esac
+
+print "→ Stopping henry-api (if running)…"
+pm2 delete henry-api >/dev/null 2>&1 || true
+
+print "→ Starting henry-api with your key in the environment…"
+OPENAI_API_KEY="$KEY" pm2 start server.mjs --interpreter=node --name henry-api --cwd "$API_DIR" --time >/dev/null
+
+pm2 save >/dev/null 2>&1 || true
+
+# Wait for :3000
+for i in {1..40}; do
+  if lsof -nP -iTCP:3000 -sTCP:LISTEN >/dev/null 2>&1; then
+    print "✅ API listening on :3000"
+    break
+  fi
+  sleep 0.25
+done
+
+# Health + quick chat smoke
+print -n "Ping: "; curl -sS "$API_URL/ping" && print ""
+print -n "Chat: "; curl -sS -X POST "$API_URL/chat" -H 'Content-Type: application/json' \
+  -d '{"messages":[{"role":"user","content":"Say one short sentence."}]}' && print ""

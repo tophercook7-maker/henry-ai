@@ -1,0 +1,58 @@
+import express from 'express';
+import cors from 'cors';
+import dotenv from 'dotenv';
+
+dotenv.config();
+
+const app = express();
+app.use(cors({ origin: true }));
+app.use(express.json({ limit: '1mb' }));
+
+app.get('/health', (_req, res) => res.json({ ok: true }));
+
+app.post('/chat', async (req, res) => {
+  try {
+    const body = req.body || {};
+    const OPENAI_API_KEY = process.env.OPENAI_API_KEY || '';
+    const usedModel = body.model || process.env.OPENAI_MODEL || 'gpt-4o-mini';
+
+    let messages = Array.isArray(body.messages) ? body.messages : [];
+    if (!messages.length) {
+      const single = (body.message ?? '').toString();
+      if (!single.trim()) return res.status(400).json({ error: 'message is required' });
+      if (body.system) messages.push({ role: 'system', content: String(body.system) });
+      messages.push({ role: 'user', content: single });
+    } else {
+      messages = messages.map(m => ({ role: String(m.role), content: String(m.content ?? '') }));
+    }
+
+    if (!OPENAI_API_KEY) {
+      const lastUser = [...messages].reverse().find(m => m.role === 'user')?.content ?? '';
+      return res.json({ reply: `echo: ${lastUser}`, provider: 'echo' });
+    }
+
+    const r = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${OPENAI_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ model: usedModel, messages, temperature: 0.7 })
+    });
+
+    if (!r.ok) {
+      const text = await r.text().catch(() => '');
+      return res.status(502).json({ error: 'upstream_error', detail: text.slice(0, 1500) });
+    }
+
+    const data = await r.json();
+    const reply = data?.choices?.[0]?.message?.content ?? '';
+    return res.json({ reply, provider: 'openai', model: usedModel });
+  } catch (err) {
+    console.error('POST /chat error', err);
+    return res.status(500).json({ error: 'server_error' });
+  }
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`API listening on :${PORT}`));

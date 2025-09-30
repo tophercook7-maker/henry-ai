@@ -1,0 +1,8 @@
+node_modules/
+dist/
+.vite/
+.pm2/
+.env*
+uploads/
+*.log
+.DS_Store

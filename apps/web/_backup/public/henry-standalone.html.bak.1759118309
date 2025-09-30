@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Henry — Core</title>
+<style>
+  :root { color-scheme: dark; }
+  *{box-sizing:border-box}
+  body{margin:0;display:flex;min-height:100vh;background:#0b0d12;color:#e7ebf3;font:14px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+  header{position:fixed;top:0;left:0;right:0;height:44px;display:flex;align-items:center;gap:10px;padding:8px 12px;border-bottom:1px solid #222a35;background:#0e1117;z-index:10}
+  #toggleSide{background:#1f2633;border:1px solid #2b3342;color:#e7ebf3;border-radius:8px;padding:6px 10px;cursor:pointer}
+  #tag{font-size:12px;color:#9aa6b2}
+  #apiBadge,#model{font-size:11px;border:1px solid #2b3342;padding:1px 6px;border-radius:999px;color:#9fb3ff}
+  #wrap{display:flex;flex:1;width:100%;margin-top:44px}
+  #side{width:220px;background:#0e1117;border-right:1px solid #222a35;padding:10px;display:flex;flex-direction:column;gap:8px}
+  #side.hidden{display:none}
+  .nav{display:flex;flex-direction:column;gap:8px}
+  .nav button{width:100%;text-align:left;background:#151a21;border:1px solid #252c38;color:#e7ebf3;padding:8px;border-radius:10px;cursor:pointer;font-size:12px}
+  .nav button.active{background:#1d2430;border-color:#2b3342}
+  #main{flex:1;display:flex;flex-direction:column;min-width:0}
+  .view{display:none;padding:14px;overflow:auto}
+  .view.active{display:block}
+  #chat{flex:1;overflow:auto;padding:14px;max-width:900px;margin:0 auto 96px}
+  .msg{margin:8px 0;padding:10px 12px;border-radius:14px;max-width:80ch;white-space:pre-wrap;word-wrap:break-word}
+  .user{background:#173b7a;color:#e7f0ff;margin-left:auto}
+  .bot{background:#0f1115;border:1px solid #2a2f3a;color:#e7ebf3}
+  #bar{position:fixed;left:0;right:0;bottom:0;display:flex;gap:8px;align-items:center;padding:10px 12px;background:rgba(20,20,22,.96);border-top:1px solid #333;backdrop-filter:blur(6px)}
+  #bar textarea{flex:1;min-height:42px;max-height:150px;resize:vertical;border:1px solid #2a2f3a;border-radius:10px;background:#0f1115;color:#e7ebf3;padding:9px 11px}
+  #send{padding:9px 12px;background:#1f2633;border:1px solid #2b3342;color:#e7ebf3;border-radius:10px;cursor:pointer}
+  .kv{display:grid;grid-template-columns:130px 1fr auto;gap:8px;align-items:center;margin:6px 0}
+  input,select{background:#0f1115;border:1px solid #2a2f3a;color:#e7ebf3;border-radius:10px;padding:8px 10px}
+  .btn{background:#1f2633;border:1px solid #2b3342;color:#e7ebf3;border-radius:10px;padding:8px 10px;cursor:pointer}
+  #toast{position:fixed;right:12px;bottom:84px;max-width:60ch;display:none;padding:9px 11px;border:1px solid #333;border-radius:10px;background:rgba(20,20,22,.96);z-index:9999}
+</style>
+<body>
+  <header>
+    <button id="toggleSide">☰ Sidebar</button>
+    <strong>Henry (Core)</strong>
+    <span id="tag">“I’m Henry — an AI program that helps you think, build, and fix.”</span>
+    <span id="apiBadge" style="margin-left:auto"></span>
+    <span id="model" style="margin-left:6px">model: …</span>
+  </header>
+
+  <div id="wrap">
+    <aside id="side">
+      <div class="nav">
+        <button data-tab="chat" class="active">💬 Chat</button>
+        <button data-tab="settings">⚙️ Settings</button>
+      </div>
+    </aside>
+
+    <main id="main">
+      <section id="view-chat" class="view active">
+        <div id="chat" aria-live="polite"></div>
+      </section>
+
+      <section id="view-settings" class="view">
+        <h3>Settings</h3>
+        <div class="kv">
+          <label for="pref-model">Model</label>
+          <select id="pref-model"><option>gpt-4o-mini</option></select>
+          <button id="test-chat" class="btn">Test</button>
+        </div>
+        <div class="kv">
+          <label for="api-base">API Base</label>
+          <input id="api-base" placeholder="http://127.0.0.1:3000"/>
+          <button id="save-api" class="btn">Save</button>
+        </div>
+        <div class="row" style="margin-top:8px;display:flex;gap:8px;">
+          <button id="key-status" class="btn">Key status</button>
+          <button id="reload-ui" class="btn">Reload UI</button>
+        </div>
+        <pre id="settings-log" style="margin-top:12px;background:#0f1115;border:1px solid #2a2f3a;padding:10px;border-radius:10px;max-height:220px;overflow:auto"></pre>
+      </section>
+    </main>
+  </div>
+
+  <div id="bar">
+    <textarea id="input" placeholder="Type to Henry — Enter sends; Shift+Enter = newline"></textarea>
+    <button id="send">Send</button>
+  </div>
+
+  <div id="toast"></div>
+  <script src="/henry-wires.js"></script>
+</body>
+</html>

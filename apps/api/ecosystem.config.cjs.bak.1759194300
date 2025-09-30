@@ -1,0 +1,15 @@
+module.exports = {
+  apps: [{
+    name: "henry-api",
+    script: "server.mjs",
+    interpreter: "node",
+    cwd: "/Users/christophercook/henry/apps/api",
+    env: {
+      PORT: "3000",
+      NODE_ENV: "production",
+      OPENAI_API_KEY: "",
+      OPENAI_PROJECT: "proj_REALID",
+      HENRY_MODEL: "gpt-4o-mini"
+    }
+  }]
+}

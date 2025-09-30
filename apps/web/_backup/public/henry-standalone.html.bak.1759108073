@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Henry — Standalone</title>
+  <style>
+    :root { color-scheme: dark; font-family: system-ui, sans-serif; }
+    body { margin:0; display:flex; height:100vh; background:#1e1e1e; color:#eee; }
+    #sidebar { width:200px; background:#111; padding:10px; display:flex; flex-direction:column; }
+    #sidebar button { margin:4px 0; padding:8px; font-size:14px; cursor:pointer; }
+    #main { flex:1; display:flex; flex-direction:column; }
+    #messages { flex:1; overflow-y:auto; padding:10px; }
+    .bubble { padding:8px 12px; margin:6px 0; border-radius:8px; max-width:70%; }
+    .user { background:#3a3f47; align-self:flex-end; }
+    .bot { background:#2a2f36; align-self:flex-start; }
+    #inputBar { display:flex; border-top:1px solid #333; }
+    #inputBar input { flex:1; padding:10px; border:none; background:#222; color:#eee; }
+    #inputBar button { padding:10px; background:#444; border:none; color:#fff; cursor:pointer; }
+  </style>
+</head>
+<body>
+  <div id="sidebar">
+    <button onclick="nav('chat')">Chat</button>
+    <button onclick="nav('history')">History</button>
+    <button onclick="nav('settings')">Settings</button>
+    <button onclick="nav('connect')">Connect</button>
+  </div>
+  <div id="main">
+    <div id="messages"></div>
+    <div id="inputBar">
+      <input id="input" placeholder="Type to Henry — Enter sends, Shift+Enter = newline">
+      <button id="send">Send</button>
+    </div>
+  </div>
+
+  <script>
+    const messages=document.getElementById("messages");
+    const input=document.getElementById("input");
+    const send=document.getElementById("send");
+
+    function bubble(who,text){
+      const b=document.createElement("div");
+      b.className="bubble "+who;
+      b.textContent=text;
+      messages.appendChild(b);
+      messages.scrollTop=messages.scrollHeight;
+    }
+
+    async function sendNow(){
+      const text=input.value.trim();
+      if(!text) return;
+      bubble("user",text);
+      input.value="";
+      try{
+        bubble("bot","Henry is thinking...");
+        const r=await fetch("http://127.0.0.1:3000/chat",{
+          method:"POST",
+          headers:{"Content-Type":"application/json"},
+          body:JSON.stringify({message:text})
+        });
+        const d=await r.json();
+        messages.lastChild.textContent=d.reply||"No reply";
+      }catch(e){
+        messages.lastChild.textContent="❌ Error reaching API";
+      }
+    }
+
+    send.onclick=sendNow;
+    input.addEventListener("keydown",e=>{
+      if(e.key==="Enter" && !e.shiftKey){
+        e.preventDefault();
+        sendNow();
+      }
+    });
+
+    function nav(tab){ bubble("bot",`[Switching to ${tab}]`); }
+  </script>
+</body>
+</html>

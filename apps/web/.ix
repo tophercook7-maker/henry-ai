@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title>Henry AI</title>
+    <link rel="stylesheet" href="/public/style.css">
+  </head>
+  <body>
+    <div id="app" class="app">
+      <div class="topbar">
+        <button id="btn-toggle" class="toggle" title="Hide/Show sidebar">☰</button>
+        <div class="brand">Henry AI</div>
+        <div class="spacer"></div>
+        <span class="pill">model: <span id="pill-model">–</span></span>
+        <span class="pill">chars: <span id="pill-chars">0</span></span>
+        <span class="pill">$ <span id="pill-cost">0.00</span></span>
+      </div>
+
+      <aside class="sidebar">
+        <h3>Chats</h3>
+        <button class="navbtn" id="btn-new">New Chat</button>
+        <div id="hist"></div>
+
+        <h3>Tabs</h3>
+        <button class="navbtn" id="tab-chat">Chat</button>
+        <button class="navbtn" id="tab-settings">Settings</button>
+        <button class="navbtn" id="tab-help">Help</button>
+      </aside>
+
+      <main class="main">
+        <div id="panel-chat" class="thread">
+          <div class="msg assistant">
+            <div class="bubble">👋 Hi, I’m Henry. Enter sends; Shift+Enter makes a newline.</div>
+            <button class="copy" data-no-chat>Copy</button>
+          </div>
+        </div>
+
+        <div id="panel-settings" class="thread hidden">
+          <div class="msg assistant"><div class="bubble">
+            <b>Settings</b><br/><br/>
+            API Base URL:<br/>
+            <input id="inp-api" type="text" style="width:100%;padding:8px;border-radius:8px;border:1px solid var(--line);background:#0e131b;color:var(--ink)" placeholder="http://127.0.0.1:3000"><br/><br/>
+            API Key (optional):<br/>
+            <input id="inp-key" type="text" style="width:100%;padding:8px;border-radius:8px;border:1px solid var(--line);background:#0e131b;color:var(--ink)" placeholder="sk-proj-…"><br/><br/>
+            <button id="btn-save-settings" class="send" data-no-chat>Save Settings</button>
+          </div></div>
+        </div>
+
+        <div id="panel-help" class="thread hidden">
+          <div class="msg assistant"><div class="bubble">
+            <b>Help</b><br/><br/>
+            • Sidebar → Settings to set API Base/Key (optional).<br/>
+            • Enter sends; Shift+Enter newline.<br/>
+            • Sidebar buttons never post chat messages.<br/>
+          </div></div>
+        </div>
+
+        <form id="composer" class="composer" autocomplete="off">
+          <textarea id="input" class="input" placeholder="Type a message…"></textarea>
+          <button id="send" class="send" type="submit">Send</button>
+        </form>
+      </main>
+
+      <div class="footer">Henry AI — local preview</div>
+    </div>
+

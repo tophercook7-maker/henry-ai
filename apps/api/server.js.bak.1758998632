@@ -1,0 +1,11 @@
+import express from "express";
+import cors from "cors";
+import dotenv from "dotenv";
+dotenv.config();
+const app = express();
+app.use(cors());
+app.use(express.json());
+app.get("/health", function(_req,res){res.json({ok:true});});
+app.post("/chat", function(req,res){var msg=(req.body&&req.body.message)||"";res.json({reply:"echo: "+msg});});
+const PORT=process.env.PORT||3000;
+app.listen(PORT,function(){console.log("API listening on :"+PORT);});

@@ -1,0 +1,30 @@
+:root { color-scheme: dark; }
+* { box-sizing: border-box; }
+header, .tabs, .pill { user-select: none; }
+
+button, .btn {
+  color: #fff !important;          /* no dark-blue labels */
+  font-weight: 500;
+}
+
+.copy, .copy-btn { opacity: .65; }
+.copy-btn:hover   { opacity: 1; }
+
+/* Sidebar: only show Chat + Settings; shrink */
+.sidebar .nav-item { margin: 4px 0; }
+.sidebar .nav-item[data-id="history"],
+.sidebar .nav-item[data-id="files"],
+.sidebar .nav-item[data-id="connect"],
+.sidebar .nav-item[data-id="comment"],
+.sidebar .nav-item.tab-comment { display: none !important; }
+
+/* Hide any rogue "Comments" panel/content if it exists */
+#panel-comments, .panel-comments, [data-panel="comments"] {
+  display: none !important;
+}
+
+/* Chat input area: keep clean */
+#input, textarea#input {
+  border-radius: 10px;
+  outline: none;
+}

@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Henry</title>
+
+    <!-- 🔒 FORCE THEME OVERRIDES (Safari-proof) -->
+    <style>
+      :root{
+        --bg:#0f1116; --panel:#151821; --panel-2:#1b2130; --border:#2a2f3a;
+        --text:#eef2f8; --muted:#aeb4c2; --accent:#0a84ff; --footer-h:92px;
+      }
+      html,body,#root{background:var(--bg) !important; color:var(--text) !important; height:100%; margin:0; padding:0}
+      /* bubble + children */
+      .bubble{background:#1b2130 !important; color:var(--text) !important; border:1px solid var(--border) !important;}
+      .bubble *{color:var(--text) !important;}
+      .bubble.user{background:color-mix(in oklab, var(--accent) 20%, #1b2130) !important;}
+      /* containers */
+      .sidebar,.chat-header,.footer{
+        background:color-mix(in oklab, var(--panel) 90%, black) !important; color:var(--text) !important;
+      }
+      /* buttons/inputs */
+      .btn,.icon-btn,.input{
+        color:var(--text) !important;
+        background:color-mix(in oklab, var(--panel-2) 80%, black) !important;
+        border:1px solid var(--border) !important;
+      }
+      /* safety: if any lib injects white backgrounds */
+      [style*="background: white"], [style*="background:#fff"], [style*="background-color: white"] {
+        background: #1b2130 !important; color: var(--text) !important;
+      }
+
+      /* Debug ribbon so we KNOW this file is active */
+      #force-ribbon{
+        position:fixed; top:0; left:0; right:0; z-index:999999;
+        background:#0a84ff; color:#031229; font:12px/1.8 -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial;
+        text-align:center; letter-spacing:.4px
+      }
+      body{padding-top:20px} /* keep ribbon from overlapping header */
+    </style>
+    <script src="/force-theme.js"></script>
+  </head>
+  <body>
+    <div id="force-ribbon">FORCE THEME ACTIVE — open port 4186</div>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

@@ -1,0 +1,110 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+API_DIR="$HOME/henry/apps/api"
+ENV="$HOME/.henry/secret.env"
+
+usage() {
+  cat <<USAGE
+henry-key — quick OpenAI key/project helper for Henry
+
+Usage:
+  henry-key edit        # open Projects page + secret.env for editing
+  henry-key restart     # restart API using env (forces env over browser key)
+  henry-key status      # show key status + verify + quick chat test
+
+Shortcuts:
+  henry-key             # same as: edit -> restart -> status
+USAGE
+}
+
+open_projects() {
+  # Open the OpenAI Projects page in Safari
+  open -a Safari "https://platform.openai.com/settings/organization/projects" || true
+}
+
+open_env() {
+  mkdir -p "$HOME/.henry"
+  if [ ! -f "$ENV" ]; then
+    cat > "$ENV" <<'ENVFILE'
+# Henry server credentials for OpenAI
+# Fill these and Save. For project keys (sk-proj-...), OPENAI_PROJECT is REQUIRED.
+OPENAI_API_KEY=sk-proj-PASTE_YOUR_KEY_HERE
+OPENAI_PROJECT=proj_PASTE_YOUR_PROJECT_ID_HERE
+# OPENAI_ORG=org_PASTE_YOUR_ORG_ID_IF_YOU_HAVE_ONE
+ENVFILE
+    chmod 600 "$ENV"
+  fi
+  open -e "$ENV" || true
+}
+
+valid_env() {
+  # Read current values
+  KEY="$(awk -F= '/^OPENAI_API_KEY=/{print substr($0,index($0,"=")+1)}' "$ENV" | tr -d '\r')"
+  PROJ="$(awk -F= '/^OPENAI_PROJECT=/{print substr($0,index($0,"=")+1)}' "$ENV" | tr -d '\r')"
+  ORG="$(awk -F= '/^OPENAI_ORG=/{print substr($0,index($0,"=")+1)}' "$ENV" | tr -d '\r')"
+
+  if [ -z "${KEY:-}" ]; then
+    echo "❌ OPENAI_API_KEY is empty in $ENV"; return 1
+  fi
+  if [[ "$KEY" == sk-proj-* ]]; then
+    if [ -z "${PROJ:-}" ] || [[ "$PROJ" != proj_* ]]; then
+      echo "❌ Project key detected but OPENAI_PROJECT is missing or not proj_* in $ENV"; return 1
+    fi
+  fi
+  return 0
+}
+
+restart_api() {
+  pm2 delete henry-api >/dev/null 2>&1 || true
+  HENRY_FORCE_ENV=1 pm2 start "node $API_DIR/server.mjs" --name henry-api --cwd "$API_DIR" --update-env
+  pm2 save >/dev/null 2>&1 || true
+  sleep 1
+}
+
+status() {
+  echo "---- /key-status ----";  curl -sS http://127.0.0.1:3000/key-status || true; echo
+  echo "---- /key-verify ----";  curl -sS http://127.0.0.1:3000/key-verify || true; echo
+  echo "---- chat smoke (complete) ----"
+  curl -sS -X POST http://127.0.0.1:3000/chat/complete \
+    -H 'Content-Type: application/json' \
+    -d '{"model":"gpt-4o-mini","messages":[{"role":"user","content":"Say OK only."}]}' || true
+  echo
+}
+
+case "${1:-}" in
+  edit)
+    open_projects
+    open_env
+    echo "➡ In TextEdit, paste your real values and Save:  $ENV"
+    echo "   Required lines:"
+    echo "     OPENAI_API_KEY=sk-...  or  sk-proj-..."
+    echo "     OPENAI_PROJECT=proj_...   (REQUIRED if using sk-proj-)"
+    echo "     # OPENAI_ORG=org_...     (only if you have one)"
+    ;;
+  restart)
+    if ! valid_env; then
+      echo "⚠ Fix $ENV, then re-run: henry-key restart"
+      exit 1
+    fi
+    restart_api
+    ;;
+  status)
+    status
+    ;;
+  ""|all|go)
+    open_projects
+    open_env
+    echo "⏳ Waiting a moment so you can Save in TextEdit…"
+    sleep 2
+    if ! valid_env; then
+      echo "⚠ Please Save your edits in TextEdit and run: henry-key restart && henry-key status"
+      exit 1
+    fi
+    restart_api
+    status
+    ;;
+  *)
+    usage
+    ;;
+esac

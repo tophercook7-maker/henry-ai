@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Henry — Standalone</title>
+<style>
+  :root { color-scheme: dark; }
+  *{box-sizing:border-box}
+  body{margin:0;display:flex;min-height:100vh;background:#0b0d12;color:#e7ebf3;font:14px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+  /* Header with only a sidebar toggle */
+  header{position:fixed;top:0;left:0;right:0;height:44px;display:flex;align-items:center;gap:10px;padding:8px 12px;border-bottom:1px solid #222a35;background:#0e1117;z-index:10}
+  #toggleSide{background:#1f2633;border:1px solid #2b3342;color:#e7ebf3;border-radius:8px;padding:6px 10px;cursor:pointer}
+  #tag{font-size:12px;color:#9aa6b2}
+  /* Layout */
+  #wrap{display:flex;flex:1;width:100%;margin-top:44px}
+  #side{width:230px;min-width:200px;background:#0e1117;border-right:1px solid #222a35;padding:10px;display:flex;flex-direction:column;gap:8px}
+  #side.hidden{display:none}
+  .nav button{width:100%;text-align:left;background:#151a21;border:1px solid #252c38;color:#e7ebf3;padding:8px;border-radius:10px;cursor:pointer;font-size:12px}
+  .nav button.active{background:#1d2430;border-color:#2b3342}
+  #main{flex:1;display:flex;flex-direction:column;min-width:0}
+  /* Chat */
+  #chat{flex:1;overflow:auto;padding:14px;max-width:900px;margin:0 auto 96px}
+  .msg{margin:8px 0;padding:10px 12px;border-radius:14px;max-width:80ch;white-space:pre-wrap;word-wrap:break-word}
+  .user{background:#173b7a;color:#e7f0ff;margin-left:auto}
+  .bot{background:#0f1115;border:1px solid #2a2f3a;color:#e7ebf3}
+  /* Composer sticks, Enter sends */
+  #bar{position:fixed;left:0;right:0;bottom:0;display:flex;gap:8px;align-items:center;padding:10px 12px;background:rgba(20,20,22,.96);border-top:1px solid #333;backdrop-filter:blur(6px)}
+  #bar textarea{flex:1;min-height:42px;max-height:150px;resize:vertical;border:1px solid #2a2f3a;border-radius:10px;background:#0f1115;color:#e7ebf3;padding:9px 11px}
+  #send{padding:9px 12px;background:#1f2633;border:1px solid #2b3342;color:#e7ebf3;border-radius:10px;cursor:pointer}
+  /* Views */
+  .view{display:none;padding:14px;overflow:auto}
+  .view.active{display:block}
+  /* Toast */
+  #toast{position:fixed;right:12px;bottom:84px;max-width:60ch;display:none;padding:9px 11px;border:1px solid #333;border-radius:10px;background:rgba(20,20,22,.96);z-index:9999}
+</style>
+<body>
+  <header>
+    <button id="toggleSide">☰ Sidebar</button>
+    <strong>Henry</strong>
+    <span id="tag">“I’m Henry — an AI program that helps you think, build, and fix.”</span>
+    <span id="model" style="margin-left:auto;font-size:12px;border:1px solid #2b3342;padding:2px 8px;border-radius:999px;color:#9fb3ff">model: …</span>
+  </header>
+
+  <div id="wrap">
+    <aside id="side">
+      <div class="nav">
+        <button data-tab="chat" class="active">💬 Chat</button>
+        <button data-tab="history">🕘 History</button>
+        <button data-tab="settings">⚙️ Settings</button>
+        <button data-tab="connect">🔗 Connect</button>
+      </div>
+    </aside>
+
+    <main id="main">
+      <section id="view-chat" class="view active">
+        <div id="chat" aria-live="polite"></div>
+      </section>
+      <section id="view-history" class="view">
+        <ul id="history-list"></ul>
+      </section>
+      <section id="view-settings" class="view">
+        <div style="display:grid;grid-template-columns:130px 1fr auto;gap:8px;align-items:center;">
+          <label>Model</label><select id="pref-model"></select><button id="test-chat">Test</button>
+          <label>Voice</label><select id="voice-toggle"><option value="off">Off</option><option value="on">On</option></select><button id="say-hi">Say hi</button>
+          <label>API Base</label><input id="api-base" placeholder="http://127.0.0.1:3000"/><button id="save-api">Save</button>
+        </div>
+        <div style="margin-top:8px;display:flex;gap:8px">
+          <button id="key-status">Key status</button><button id="reload-ui">Reload UI</button><button id="save-thread">Save chat</button>
+        </div>
+        <pre id="settings-log" style="margin-top:12px;background:#0f1115;border:1px solid #2a2f3a;padding:10px;border-radius:10px;max-height:220px;overflow:auto"></pre>
+      </section>
+      <section id="view-connect" class="view">
+        <div id="providers" style="display:grid;gap:10px;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));"></div>
+        <pre id="connect-log" style="margin-top:12px;background:#0f1115;border:1px solid #2a2f3a;padding:10px;border-radius:10px;max-height:220px;overflow:auto"></pre>
+      </section>
+    </main>
+  </div>
+
+  <div id="bar">
+    <textarea id="input" placeholder="Type to Henry — Enter sends; Shift+Enter = newline"></textarea>
+    <button id="send">Send</button>
+  </div>
+
+  <div id="toast"></div>
+
+<script>
+/* ===== Helpers & state ===== */
+const LS={kAPI:"henry:apiBase",kVoice:"henry:voice",kModel:"henry:model",kThreads:"henry:thread:",kConn:"henry:conn:"};
+let API=localStorage.getItem(LS.kAPI)||(window.HENRY_API_BASE||"http://127.0.0.1:3000");
+const $=id=>document.getElementById(id); const qa=s=>Array.from(document.querySelectorAll(s));
+const toastEl=$("toast");
+function toast(m,err=false){toastEl.textContent=m;toastEl.style.display="block";toastEl.style.borderColor=err?"#a33":"#333";toastEl.style.color=err?"#ffd6d6":"#e7ebf3";clearTimeout(toastEl._h);toastEl._h=setTimeout(()=>toastEl.style.display="none",2400);}
+window.onerror=(m)=>toast("JS error: "+m,true);
+window.onunhandledrejection=()=>toast("Promise error",true);
+
+/* ===== Layout ===== */
+$("toggleSide").onclick=()=> $("side").classList.toggle("hidden");
+function switchTab(name){ qa(".view").forEach(v=>v.classList.remove("active")); qa("[data-tab]").forEach(b=>b.classList.remove("active")); $("view-"+name).classList.add("active"); qa('[data-tab="'+name+'"]').forEach(b=>b.classList.add("active")); }
+qa('[data-tab]').forEach(b=> b.onclick=()=>switchTab(b.dataset.tab));
+
+/* ===== Chat ===== */
+const chat=$("chat"), input=$("input"), send=$("send"), modelEl=$("model");
+function bubble(role,text){const d=document.createElement("div");d.className="msg "+(role==="user"?"user":"bot");d.textContent=text;chat.appendChild(d);d.scrollIntoView({behavior:"smooth",block:"end"});return d;}
+function fetchWithTimeout(url,opts={},ms=9000){const c=new AbortController();const t=setTimeout(()=>c.abort(),ms);return fetch(url,{...opts,signal:c.signal}).finally(()=>clearTimeout(t));}
+async function sendNow(){
+  const text=(input.value||"").trim(); if(!text){toast("Type something first");return;}
+  bubble("user",text); input.value=""; const th=bubble("bot","…thinking");
+  try{
+    const r=await fetchWithTimeout(API+"/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({messages:[{role:"user",content:text}]})});
+    const ct=r.headers.get("content-type")||""; const isJSON=ct.includes("application/json");
+    const data=isJSON? await r.json().catch(()=>null): await r.text();
+    th.textContent = r.ok ? ((isJSON?(data?.reply||data?.content):data)||"No reply") : ("Chat failed "+r.status);
+  }catch(e){ th.textContent="Network/timeout hitting API"; toast("Network/timeout",true); }
+}
+send.onclick=sendNow;
+input.addEventListener("keydown",e=>{ if(e.key==="Enter" && !e.shiftKey){ e.preventDefault(); sendNow(); } });
+
+/* ===== Settings wires (minimal for model label & API base) ===== */
+const prefModel=$("pref-model"), apiBase=$("api-base"), settingsLog=$("settings-log");
+(async()=>{
+  apiBase.value=API;
+  try{ const r=await fetch(API+"/key-verify"); const j=await r.json(); const models=j?.ok&&Array.isArray(j.models)?j.models:["gpt-4o-mini"]; prefModel.innerHTML=""; models.forEach(m=>{const o=document.createElement("option");o.value=o.textContent=m;prefModel.appendChild(o);}); modelEl.textContent="model: "+(models[0]||"gpt-4o-mini"); }catch{ modelEl.textContent="model: gpt-4o-mini"; }
+})();
+$("save-api").onclick=()=>{ const v=(apiBase.value||"").trim(); if(!/^https?:\/\/.+/.test(v)) return toast("Enter full URL",true); API=v; localStorage.setItem(LS.kAPI,v); toast("Saved API base"); };
+$("key-status").onclick=async()=>{ try{const r=await fetch(API+"/key-verify"); settingsLog.textContent=await r.text(); toast(r.ok?"Key OK":"Key failed",!r.ok);}catch(e){settingsLog.textContent=String(e);toast("Key check failed",true);} };
+$("reload-ui").onclick=()=>location.reload();
+$("save-thread").onclick=()=>toast("Thread saved (placeholder)");
+
+/* ===== Connect (open sites + remember state) ===== */
+const providersEl=$("providers"), connLog=$("connect-log");
+const PROVIDERS=[{id:"drive",name:"Google Drive",url:"https://drive.google.com"},{id:"gmail",name:"Gmail",url:"https://mail.google.com"},{id:"slack",name:"Slack",url:"https://slack.com/signin"},{id:"github",name:"GitHub",url:"https://github.com/login"},{id:"notion",name:"Notion",url:"https://www.notion.so/login"},{id:"calendar",name:"Google Calendar",url:"https://calendar.google.com"},{id:"terminal",name:"Terminal (local)",cli:"open -a Terminal"}];
+function isConn(id){ return localStorage.getItem(LS.kConn+id)==="1"; }
+function setConn(id,v){ localStorage.setItem(LS.kConn+id, v?"1":"0"); }
+function logc(s){ connLog.textContent=(connLog.textContent?connLog.textContent+"\n":"")+s; connLog.scrollTop=connLog.scrollHeight; }
+function renderConnect(){
+  providersEl.innerHTML="";
+  PROVIDERS.forEach(p=>{
+    const card=document.createElement("div"); card.style.border="1px solid #252c38"; card.style.background="#121722"; card.style.borderRadius="12px"; card.style.padding="12px";
+    const ok=isConn(p.id);
+    card.innerHTML=\`<div style="display:flex;justify-content:space-between;align-items:center;"><strong>\${p.name}</strong><span style="font-size:11px;color:#9fb3ff;">\${ok?"✅ Connected":""}</span></div>\`;
+    const row=document.createElement("div"); row.style.display="flex"; row.style.gap="8px"; row.style.marginTop="8px";
+    const act=document.createElement("button"); act.textContent=ok?(p.id==="terminal"?"Show command":"Open"):(p.id==="terminal"?"Show command":"Connect");
+    act.onclick=()=>{ if(p.id==="terminal"){ logc("Terminal: run this in macOS:"); logc("$ "+(p.cli||"open -a Terminal")); setConn(p.id,true);} else { if(p.url) window.open(p.url,"_blank"); setConn(p.id,true); logc(\`\${p.name}: launched \${p.url}\`);} renderConnect(); };
+    const dis=document.createElement("button"); dis.textContent="Disconnect"; dis.onclick=()=>{ setConn(p.id,false); logc(\`\${p.name}: disconnected\`); renderConnect(); };
+    row.appendChild(act); row.appendChild(dis); card.appendChild(row); providersEl.appendChild(card);
+  });
+}
+renderConnect();
+
+/* ===== Welcome ===== */
+bubble("bot","Howdy — Henry’s up. Enter sends; Shift+Enter adds a line.");
+</script>
+</body>
+</html>

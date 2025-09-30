@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Henry — Standalone</title>
+<style>
+  :root { color-scheme: dark; }
+  html,body {height:100%; margin:0; background:#0b0d12; color:#e7ebf3; font:14px/1.45 system-ui, -apple-system, Segoe UI, Roboto, sans-serif;}
+  .app { display:grid; grid-template-columns: 240px 1fr; height:100%; }
+  .sidebar { background:#0f141c; border-right:1px solid #1c2330; padding:10px; gap:8px; display:flex; flex-direction:column; }
+  .sb-top { display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
+  .title { font-weight:700; opacity:.9 }
+  .btn, .tab { cursor:pointer; user-select:none; border:none; border-radius:8px; padding:8px 10px; background:#1b2332; color:#cfe1ff; font-weight:600 }
+  .btn:hover, .tab:hover { background:#223047 }
+  .tab.active { background:#2c3a55 }
+  .small { font-size:12px; opacity:.75 }
+  .hidden { display:none !important }
+  .content { position:relative; display:flex; flex-direction:column; height:100%; }
+  header { display:flex; align-items:center; gap:8px; padding:8px 10px; border-bottom:1px solid #1c2330; background:#0f141c; }
+  #chat { padding:14px; overflow:auto; flex:1 }
+  .bubble { background:#162033; border:1px solid #26324a; padding:10px 12px; border-radius:12px; margin:8px 0; max-width:800px; }
+  .user { background:#16302a; border-color:#244638 }
+  footer { display:flex; gap:8px; padding:8px 10px; border-top:1px solid #1c2330; background:#0f141c }
+  #input { flex:1; resize:none; min-height:40px; max-height:160px; padding:9px 11px; border-radius:10px; border:1px solid #26324a; background:#0b0f18; color:#e7ebf3; }
+  .chips { display:flex; gap:6px; flex-wrap:wrap; padding:0 10px 6px 10px; }
+  .chip { background:#1b2332; border:1px solid #2a3650; padding:3px 8px; border-radius:999px; font-size:12px }
+  .right { margin-left:auto }
+</style>
+
+<body>
+<div class="app">
+  <aside class="sidebar" id="sidebar">
+    <div class="sb-top">
+      <div class="title">Henry</div>
+      <button class="btn small" id="toggle">Hide</button>
+    </div>
+    <button class="tab active" id="tab-chat">Chat</button>
+    <button class="tab" id="tab-settings">Settings</button>
+    <div class="small" style="margin-top:auto;opacity:.65">API: <span id="apiLabel"></span></div>
+  </aside>
+
+  <section class="content">
+    <header>
+      <div class="small" style="opacity:.75">Howdy — Henry’s here. You can drag a file into this area or click 📎 Attach.</div>
+      <button class="btn right small" id="copyLast">Copy</button>
+    </header>
+
+    <!-- Chat view -->
+    <div id="view-chat">
+      <div id="chat"></div>
+      <div class="chips" id="chips"></div>
+      <footer>
+        <input type="file" id="file" class="hidden"/>
+        <button class="btn" id="attachBtn">Attach</button>
+        <textarea id="input" placeholder="Type to Henry — Enter sends; Shift+Enter = newline"></textarea>
+        <button class="btn" id="sendBtn">Send</button>
+      </footer>
+    </div>
+
+    <!-- Settings view -->
+    <div id="view-settings" class="hidden" style="padding:16px">
+      <h3 style="margin:8px 0 12px">Settings</h3>
+      <label class="small">OpenAI API Key</label><br/>
+      <input id="key" style="width:480px;max-width:100%;padding:8px;border-radius:8px;border:1px solid #26324a;background:#0b0f18;color:#e7ebf3">
+      <button class="btn" id="saveKey">Save</button>
+      <span class="small" id="keyStatus" style="margin-left:8px;opacity:.8"></span>
+      <div class="small" style="margin-top:12px;opacity:.75">Stored only in this browser. Sent as <code>x-api-key</code> to the Henry API.</div>
+    </div>
+  </section>
+</div>
+
+<script src="/henry-wires.js"></script>
+<script>
+(function(){
+  const $ = s => document.querySelector(s);
+  const chatEl = $('#chat');
+  const input  = $('#input');
+  const fileEl = $('#file');
+  const chips  = $('#chips');
+  const apiLabel = $('#apiLabel');
+
+  // Sidebar toggle
+  $('#toggle').onclick = () => {
+    const sb = $('#sidebar');
+    if (sb.classList.contains('hidden')) { sb.classList.remove('hidden'); $('#toggle').textContent='Hide'; }
+    else { sb.classList.add('hidden'); $('#toggle').textContent='Show'; }
+  };
+
+  // Tabs
+  function show(view){
+    $('#view-chat').classList.toggle('hidden', view!=='chat');
+    $('#view-settings').classList.toggle('hidden', view!=='settings');
+    $('#tab-chat').classList.toggle('active', view==='chat');
+    $('#tab-settings').classList.toggle('active', view==='settings');
+  }
+  $('#tab-chat').onclick = () => show('chat');
+  $('#tab-settings').onclick = () => { show('settings'); $('#key').focus(); };
+
+  // Settings save
+  const loadKey = () => (localStorage.getItem('henry_api_key')||'').trim();
+  const saveKey = k => localStorage.setItem('henry_api_key', k.trim());
+  const mask = k => k ? k.slice(0,2)+'…'+k.slice(-4) : '—';
+  function refreshKeyUI(){
+    const k = loadKey();
+    $('#key').value = k;
+    apiLabel.textContent = mask(k);
+  }
+  $('#saveKey').onclick = () => {
+    const k = $('#key').value || '';
+    saveKey(k);
+    refreshKeyUI();
+    $('#keyStatus').textContent = 'Saved';
+    setTimeout(()=>$('#keyStatus').textContent='',1200);
+  };
+  refreshKeyUI();
+
+  // Helpers
+  function bubble(cls, text){
+    const div = document.createElement('div');
+    div.className = 'bubble '+(cls||'');
+    div.textContent = text;
+    chatEl.appendChild(div);
+    chatEl.scrollTop = chatEl.scrollHeight;
+    return div;
+  }
+  function lastReplyText(){
+    const b = chatEl.querySelectorAll('.bubble');
+    return b.length ? b[b.length-1].textContent : '';
+  }
+
+  // Copy last
+  $('#copyLast').onclick = async () => {
+    const t = lastReplyText();
+    if (t) await navigator.clipboard.writeText(t);
+  };
+
+  // Attach
+  $('#attachBtn').onclick = () => fileEl.click();
+  fileEl.onchange = async () => {
+    if (!fileEl.files || !fileEl.files[0]) return;
+    const fd = new FormData(); fd.append('file', fileEl.files[0]);
+    try {
+      const r = await fetch('/upload', { method:'POST', body: fd });
+      if (!r.ok) throw new Error('upload_failed');
+      const j = await r.json();
+      const chip = document.createElement('span');
+      chip.className = 'chip';
+      chip.textContent = j.file?.originalName || 'file';
+      chip.dataset.url = j.file?.url || '';
+      chips.appendChild(chip);
+    } catch(e){ bubble('', 'Upload failed'); }
+  };
+
+  // Send
+  async function send(){
+    const text = input.value.trim();
+    if (!text) return;
+    bubble('user', text);
+    input.value = '';
+
+    // Include any file links as system preface
+    const files = Array.from(chips.querySelectorAll('.chip')).map(c => c.dataset.url).filter(Boolean);
+    const preface = files.length ? `Attached files:\n${files.map(u=>location.origin+u).join('\n')}\n\n` : '';
+
+    const body = { messages: [{role:'user', content: preface + text}] };
+    try {
+      const r = await fetch('/chat', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+      const j = await r.json().catch(()=> ({}));
+      const reply = (j && j.reply) || j.choices?.[0]?.message?.content || 'Error: load failed';
+      bubble('', reply);
+    } catch(e){
+      bubble('', 'Network error to API');
+    }
+  }
+  $('#sendBtn').onclick = send;
+  input.addEventListener('keydown', (e)=>{
+    if (e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); send(); }
+  });
+
+  // Hello
+  bubble('', 'Hi, I\'m Henry. I’m ready.');
+})();
+</script>
+<script src="/henry-chat-fix.js"></script>

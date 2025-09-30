@@ -1,0 +1,31 @@
+/* Sticky footer composer */
+#henry-hotfix {
+  position: fixed; left: 0; right: 0; bottom: 0;
+  display: flex; gap: 8px; align-items: center;
+  padding: 10px; background: rgba(20,20,22,0.96);
+  border-top: 1px solid #333; z-index: 9999;
+  backdrop-filter: blur(6px);
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+}
+#henry-hotfix textarea {
+  flex: 1; min-height: 42px; max-height: 160px; resize: vertical;
+  background: #0f1115; color: #e7ebf3; border: 1px solid #2a2f3a; border-radius: 8px;
+  padding: 10px 12px; line-height: 1.3;
+}
+#henry-hotfix .btn {
+  padding: 8px 10px; font-size: 12px; line-height: 1; border-radius: 8px;
+  background: #1f2633; color: #e7ebf3; border: 1px solid #2b3342; cursor: pointer;
+}
+#henry-hotfix .btn:disabled { opacity: 0.5; cursor: default; }
+#henry-hotfix .pill { font-size: 11px; padding: 6px 8px; border-radius: 999px; border: 1px solid #2b3342; color: #9fb3ff; }
+#henry-hotfix input[type="file"] { display: none; }
+
+@media (max-width: 600px) {
+  #henry-hotfix .btn { padding: 8px 8px; }
+}
+
+/* Make message bubbles readable even if app CSS is off */
+.henry-msg { max-width: 800px; margin: 8px auto; padding: 10px 12px; border-radius: 14px; }
+.henry-user { background: #173b7a; color: #e7f0ff; }
+.henry-bot  { background: #0f1115; color: #e7ebf3; border: 1px solid #2a2f3a; }
+body { background: #0b0d12; }

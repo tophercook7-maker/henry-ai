@@ -1,0 +1,28 @@
+import express from 'express';
+import cors from 'cors';
+import fs from 'node:fs';
+import path from 'node:path';
+import browseRouter from './routes/browse.mjs';
+
+import chatRouter from './routes/chat.mjs';
+
+const app = express();
+app.use(cors());
+app.use(express.json({ limit: '25mb' }));
+app.use(express.urlencoded({ extended: true, limit: '25mb' }));
+
+app.get('/health', (_req,res)=>res.json({ ok:true, service:'henry-api', ts: Date.now() }));
+app.get('/ping',   (_req,res)=>res.json({ ok:true }));
+
+// uploads (placeholder; can wire a real upload route later)
+const UPLOAD_DIR = path.resolve('./uploads');
+fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+app.use('/uploads', express.static(UPLOAD_DIR));
+
+app.use('/', browseRouter);
+app.use('/', chatRouter);
+
+const PORT = Number(process.env.PORT || 3000);
+app.listen(PORT, '127.0.0.1', () => {
+  console.log(`Henry API listening on http://127.0.0.1:${PORT}`);
+});

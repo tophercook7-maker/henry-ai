@@ -1,0 +1,78 @@
+// server.mjs
+import express from "express";
+import cors from "cors";
+import bodyParser from "body-parser";
+import fetch from "node-fetch";
+import dotenv from "dotenv";
+import os from "os";
+
+dotenv.config({ path: `${process.env.HOME}/.henry/secret.env` });
+
+const app = express();
+app.use(cors());
+app.use(bodyParser.json());
+
+// Health check
+app.get("/health", (req, res) => {
+  res.json({ ok: true, status: 200, message: "Henry API is healthy" });
+});
+
+// Verify key
+app.get("/key-verify", async (req, res) => {
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) {
+    return res.status(400).json({ ok: false, error: "Missing API key" });
+  }
+  try {
+    const r = await fetch("https://api.openai.com/v1/models", {
+      headers: { Authorization: `Bearer ${apiKey}` },
+    });
+    if (!r.ok) {
+      return res.status(r.status).json({ ok: false, error: await r.text() });
+    }
+    const data = await r.json();
+    res.json({ ok: true, status: 200, models: data.data?.map(m => m.id) });
+  } catch (err) {
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+// Chat endpoint
+app.post("/chat", async (req, res) => {
+  const { messages } = req.body;
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) {
+    return res.status(400).json({ ok: false, error: "Missing API key" });
+  }
+  try {
+    const r = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+        ...(process.env.OPENAI_PROJECT
+          ? { "OpenAI-Project": process.env.OPENAI_PROJECT }
+          : {}),
+        ...(process.env.OPENAI_ORG
+          ? { "OpenAI-Organization": process.env.OPENAI_ORG }
+          : {}),
+      },
+      body: JSON.stringify({
+        model: "gpt-4o-mini",
+        messages,
+      }),
+    });
+    if (!r.ok) {
+      return res.status(r.status).json({ ok: false, error: await r.text() });
+    }
+    const data = await r.json();
+    res.json({ ok: true, reply: data.choices[0]?.message?.content });
+  } catch (err) {
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Henry API listening on http://127.0.0.1:${PORT}`);
+});

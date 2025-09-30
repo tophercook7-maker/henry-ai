@@ -1,0 +1,51 @@
+:root { color-scheme: dark; --bg:#0d0f13; --panel:#12151b; --ring:#1b2230; --fg:#dfe6f3; --sub:#9aa7bc; --accent:#4da3ff; --good:#2ecc71; --muted:#5b6a83; }
+*{ box-sizing:border-box; }
+html,body{ height:100%; margin:0; }
+body{ background:var(--bg); color:var(--fg); font:14px/1.5 ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial; -webkit-font-smoothing:antialiased; }
+#root{ height:100%; display:flex; flex-direction:column; }
+
+/* Panels / chat area assumed from your app; we only soften visuals */
+.chat, .chat-body, .messages, [role=log]{
+  background:transparent;
+}
+
+/* Composer: keep ONE, pinned at bottom, subtle ring */
+form, .composer, .compose-wrap, #reply, .message-composer {
+  background:var(--panel);
+  border:1px solid var(--ring);
+  border-radius:12px;
+  padding:8px;
+}
+textarea, [contenteditable="true"], input[type="text"], input[type="search"], [role="textbox"]{
+  width:100%; background:transparent; color:var(--fg); border:0; outline:0; resize:vertical;
+}
+textarea::placeholder{ color:var(--muted); }
+button{ background:#1a2130; color:#fff; border:1px solid #273149; border-radius:10px; padding:6px 10px; cursor:pointer; }
+button:hover{ background:#20293c; }
+
+/* Bubbles: assistant vs user */
+.bubble, .message, .msg{
+  border-radius:12px; padding:8px 10px; margin:6px 0; max-width:900px;
+}
+.bubble.assistant, .message.assistant, .msg.assistant{ background:#0f1520; border:1px solid #1a2235; }
+.bubble.user, .message.user, .msg.user{ background:#101922; border:1px solid #1a2330; }
+
+/* Copy button only on assistant */
+.h-copy{
+  display:inline-flex; gap:6px; align-items:center;
+  font-size:12px; padding:4px 8px; border:1px solid #2a3756; border-radius:8px; background:#121a28; color:#cfe3ff;
+}
+.h-copy:hover{ background:#162238; }
+
+/* Pills (top-right) */
+.h-pills{
+  position:fixed; top:10px; right:10px; display:flex; gap:8px; z-index:9999;
+}
+.h-pill{ background:#121a28; color:#cfe3ff; border:1px solid #243250; border-radius:999px; padding:4px 10px; font-size:12px; }
+
+/* Hide any duplicate composer/map shells the host UI may render */
+.dupe-composer{ display:none !important; }
+#map{ display:none !important; } /* kill any strange map element that reappears */
+
+/* Make header labels readable */
+header .btn, header .button, .sidebar .button { color:#fff !important; }

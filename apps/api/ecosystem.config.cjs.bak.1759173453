@@ -1,0 +1,15 @@
+module.exports = {
+  apps: [{
+    name: "henry-api",
+    script: "server.mjs",
+    interpreter: "node",
+    cwd: process.env.HOME + "/henry/apps/api",
+    env: {
+      OPENAI_API_KEY: "sk-proj-PASTE-YOUR-REAL-KEY"
+      // , OPENAI_ORG_ID: "org_..."
+      // , OPENAI_PROJECT_ID: "proj_..."
+    },
+    time: true,
+    watch: false
+  }]
+};
