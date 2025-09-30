@@ -1,0 +1,99 @@
+// HENRY_SYSTEM_HELPERS_BEGIN
+import os from "node:os";
+import child_process from "node:child_process";
+const ex = (cmd,args,opts={}) => new Promise((resolve)=>{
+  const ps = child_process.spawn(cmd,args,{shell:false,env:process.env,...opts});
+  let out="", err=""; ps.stdout.on("data",d=>out+=d); ps.stderr.on("data",d=>err+=d);
+  ps.on("close",code=>resolve({code,out,err}));
+});
+
+// ---- SAFETY GUARDS ----
+function safeStr(s){ return String(s??"").trim(); }
+function isPlainNumber(s){ return /^[0-9]+$/.test(s); }
+function rejectPathy(a){ return a.some(x => /(^\/|\.{2}\/|\/\.{2}|~)/.test(x)); } // no abs/..home
+function capArgs(args, limit=12){ if(args.length>limit) throw new Error("too-many-args"); return args; }
+
+// ---- WHITELIST ----
+const ALLOWED = {
+  git: new Set(["status","branch","rev-parse","log","show","diff","ls-files"]),
+  gh:  new Set(["repo","pr","issue","auth"]),
+  xcodebuild: new Set(["-showsdks","-version","-list"]),
+  uname: new Set(["-a"]),
+  node: new Set(["-v"]),
+  npm:  new Set(["-v"])
+};
+
+app.post("/system/run", async (req,res)=>{
+  try{
+    const admin = safeStr(req.headers["x-local-admin"])==="1";
+    if(!admin) return res.status(403).json({ok:false,error:"admin-off"});
+
+    const body=req.body||{};
+    const cmd = safeStr(body.cmd);
+    let args = Array.isArray(body.args)? body.args.map(safeStr) : [];
+    const cwd  = safeStr(body.cwd)||process.cwd();
+
+    if(!cmd) return res.status(400).json({ok:false,error:"missing-cmd"});
+    if(!Object.prototype.hasOwnProperty.call(ALLOWED, cmd)) {
+      return res.status(400).json({ok:false,error:"not-allowed-cmd"});
+    }
+    args = capArgs(args, 12);
+    if(rejectPathy(args)) return res.status(400).json({ok:false,error:"blocked-path-arg"});
+
+    // Per-command arg validation
+    if(cmd==="git"){
+      const sub=args[0]||"";
+      if(!ALLOWED.git.has(sub)) return res.status(400).json({ok:false,error:"git-subcmd-blocked",sub});
+      if(sub==="rev-parse"){
+        // allow: git rev-parse --abbrev-ref HEAD
+        const okArgs=new Set(["rev-parse","--abbrev-ref","HEAD"]);
+        for(const x of args){ if(!okArgs.has(x)) return res.status(400).json({ok:false,error:"git-arg-blocked",arg:x}); }
+      }
+      if(sub==="log"){
+        // allow: git log --oneline -n N
+        const expect=new Set(["log","--oneline","-n"]);
+        if(args.length<2) return res.status(400).json({ok:false,error:"git-log-needs-flags"});
+        if(!(expect.has(args[0]) && expect.has(args[1]))) return res.status(400).json({ok:false,error:"git-log-flags"});
+        if(args[2] && args[2]!=="-n") return res.status(400).json({ok:false,error:"git-log-only-n"});
+        if(args[3] && !isPlainNumber(args[3])) return res.status(400).json({ok:false,error:"git-log-n-not-number"});
+      }
+      if(sub==="show"){
+        // allow: git show <ref> (short-ish)
+        if(args.length!==2) return res.status(400).json({ok:false,error:"git-show-one-ref"});
+        if(args[1].length>64) return res.status(400).json({ok:false,error:"git-ref-too-long"});
+      }
+      if(sub==="diff"){
+        // allow: git diff --name-only [<ref>]
+        const okFirst=["diff","--name-only"];
+        if(args.length<2) return res.status(400).json({ok:false,error:"git-diff-needs--name-only"});
+        if(args[0]!=="diff"||args[1]!=="--name-only") return res.status(400).json({ok:false,error:"git-diff-only-name-only"});
+      }
+      // status, branch, ls-files have no extra validation
+    }
+
+    if(cmd==="gh"){
+      // allow small subset: repo view, pr list, issue list, auth status
+      const sub=args[0]||"";
+      if(!ALLOWED.gh.has(sub)) return res.status(400).json({ok:false,error:"gh-subcmd-blocked",sub});
+      if(sub==="repo"){
+        if(args[1] && args[1]!=="view") return res.status(400).json({ok:false,error:"gh-repo-only-view"});
+      }
+      if(sub==="pr"){
+        if(args[1] && args[1]!=="list") return res.status(400).json({ok:false,error:"gh-pr-only-list"});
+      }
+      if(sub==="issue"){
+        if(args[1] && args[1]!=="list") return res.status(400).json({ok:false,error:"gh-issue-only-list"});
+      }
+      if(sub==="auth"){
+        if(args[1] && args[1]!=="status") return res.status(400).json({ok:false,error:"gh-auth-only-status"});
+      }
+    }
+
+    // xcodebuild/uname/node/npm are already constrained by allowed flags
+    const {code,out,err} = await ex(cmd,args,{cwd});
+    return res.json({ok:true,code,out,err});
+  }catch(e){
+    return res.status(500).json({ok:false,error:String(e)});
+  }
+});
+// HENRY_SYSTEM_HELPERS_END

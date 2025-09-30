@@ -1,0 +1,78 @@
+// HENRY_WRITE_CAPS_BEGIN
+import fs from "node:fs";
+import fsp from "node:fs/promises";
+import path from "node:path";
+
+const PROJECT_ROOT = path.resolve(process.cwd(), ".."); // apps/api -> apps -> henry (root)
+function safePath(p){
+  const raw = String(p ?? "").trim();
+  if(!raw) throw new Error("missing-path");
+  if(raw.startsWith("/") || raw.includes("..")) throw new Error("unsafe-path");
+  const abs = path.resolve(PROJECT_ROOT, raw);
+  if(!abs.startsWith(PROJECT_ROOT)) throw new Error("escaped-root");
+  return abs;
+}
+
+function requireDanger(req){
+  const admin = String(req.headers["x-local-admin"]||"").trim()==="1";
+  const dang  = String(req.headers["x-dangerous"]||"").trim()==="1";
+  if(!admin) throw new Error("admin-off");
+  if(!dang)  throw new Error("danger-confirm-missing");
+}
+
+/** List directory relative to repo root: { path } */
+app.post("/fs/list", async (req,res)=>{
+  try{
+    const rel = (req.body && req.body.path) || ".";
+    const abs = safePath(rel);
+    const ents = await fsp.readdir(abs, { withFileTypes:true });
+    const items = ents.map(e=>({name:e.name, dir:e.isDirectory(), file:e.isFile()}));
+    res.json({ok:true, root:PROJECT_ROOT, path:rel, items});
+  }catch(e){ res.status(400).json({ok:false, error:String(e.message||e)}); }
+});
+
+/** Read a small text file: { path, max=200000 } */
+app.post("/fs/read", async (req,res)=>{
+  try{
+    const rel = (req.body && req.body.path);
+    const abs = safePath(rel);
+    const max = Math.min(Number(req.body?.max||200000), 2_000_000);
+    const buf = await fsp.readFile(abs);
+    const txt = buf.slice(0, max).toString("utf8");
+    res.json({ok:true, path:rel, size:buf.length, content:txt, truncated: buf.length>max});
+  }catch(e){ res.status(400).json({ok:false, error:String(e.message||e)}); }
+});
+
+/** Write text file (create/overwrite): { path, content } */
+app.post("/fs/write", async (req,res)=>{
+  try{
+    requireDanger(req);
+    const rel = (req.body && req.body.path);
+    const abs = safePath(rel);
+    const content = String(req.body?.content ?? "");
+    await fsp.mkdir(path.dirname(abs), { recursive:true });
+    await fsp.writeFile(abs, content, "utf8");
+    res.json({ok:true, path:rel, bytes: Buffer.byteLength(content, "utf8")});
+  }catch(e){ res.status(400).json({ok:false, error:String(e.message||e)}); }
+});
+
+/** Git commit (and optional push): { message, push=false } */
+app.post("/git/commit", async (req,res)=>{
+  try{
+    requireDanger(req);
+    const msg = String(req.body?.message ?? "").trim();
+    if(!msg) throw new Error("missing-commit-message");
+    // Run from PROJECT_ROOT
+    const {code:ca,out:oa,err:ea} = await ex("git",["add","-A"],{cwd:PROJECT_ROOT});
+    if(ca!==0) return res.status(500).json({ok:false,step:"add",out:oa,err:ea});
+    const {code:cc,out:oc,err:ec} = await ex("git",["commit","-m",msg],{cwd:PROJECT_ROOT});
+    // commit might be no-op if nothing changed
+    let push = false, pushResult=null;
+    if(req.body?.push){
+      const {code:cp,out:op,err:ep} = await ex("git",["push"],{cwd:PROJECT_ROOT});
+      push = true; pushResult={code:cp,out:op,err:ep};
+    }
+    res.json({ok:true, add:{code:ca,out:oa,err:ea}, commit:{code:cc,out:oc,err:ec}, push, pushResult});
+  }catch(e){ res.status(400).json({ok:false, error:String(e.message||e)}); }
+});
+// HENRY_WRITE_CAPS_END
