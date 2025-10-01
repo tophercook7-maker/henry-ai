@@ -1,0 +1,15 @@
+[Henry AI macOS Installer]
+===========================
+This is the standalone macOS installer for Henry AI
+
+Features:
+- Runs independently in its own window
+- Menu bar integration
+- File system access
+- Terminal command execution
+- Offline capabilities
+
+Installation:
+1. Double-click this disk image
+2. Drag Henry AI to your Applications folder
+3. Launch Henry AI from your Applications folder

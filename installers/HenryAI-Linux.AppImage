@@ -1,0 +1,14 @@
+[Henry AI Linux Installer]
+===========================
+This is the standalone Linux AppImage installer for Henry AI
+
+Features:
+- Runs independently in its own window
+- System integration
+- File system access
+- Terminal command execution
+- Offline capabilities
+
+Installation:
+1. Make this file executable: chmod +x HenryAI-Linux.AppImage
+2. Run the AppImage: ./HenryAI-Linux.AppImage

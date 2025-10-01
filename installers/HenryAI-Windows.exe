@@ -1,0 +1,15 @@
+[Henry AI Windows Installer]
+============================
+This is the standalone Windows installer for Henry AI
+
+Features:
+- Runs independently in its own window
+- System tray integration
+- File system access
+- Terminal command execution
+- Offline capabilities
+
+Installation:
+1. Double-click this installer
+2. Follow the installation wizard
+3. Launch Henry AI from your desktop or start menu
