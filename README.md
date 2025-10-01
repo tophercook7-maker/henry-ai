@@ -1,42 +1,70 @@
-# Henry AI
+# Henry AI - Master Writer & Developer Assistant
 
-Henry AI is a local AI chat assistant with a clean, modern web interface. It can chat using OpenAI's API (when you provide a key) or provide helpful local responses as a fallback.
+Henry AI is an advanced AI assistant specifically designed for writers and developers. It combines the expertise of a master writer, professional editor, and full-stack developer in one powerful tool.
 
-![Henry AI](https://img.shields.io/badge/version-1.0.0-blue)
+![Henry AI](https://img.shields.io/badge/version-2.0.0-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
+![Writer](https://img.shields.io/badge/mode-Writer-purple)
+![Developer](https://img.shields.io/badge/mode-Developer-cyan)
 
-## Features
+## 🎯 Core Capabilities
 
-- 🤖 **AI Chat Interface** - Clean, modern chat UI with message history
-- 🔑 **OpenAI Integration** - Use your own OpenAI API key for GPT-4o-mini responses
-- 💬 **Local Fallback** - Helpful responses even without an API key
-- 📊 **Usage Tracking** - Monitor model usage, character count, and estimated costs
-- ⚙️ **Configurable** - Easy settings panel for API configuration
-- 🖥️ **Desktop App** - Native desktop application using Tauri (macOS, Windows, Linux)
-- 🌐 **Web Version** - Also runs as a web application
+### 🖋️ Master Writer & Editor
+- **Ebook Creation**: Complete guidance from concept to publication
+- **Large-Scale Projects**: Novels, technical books, documentation
+- **Professional Editing**: Developmental, line, copy, and proofreading
+- **Research & Citations**: Fact-checking, source verification, academic standards
+- **Story Structure**: Narrative development, character arcs, plot construction
+- **Publishing Expertise**: Industry knowledge, formatting, distribution
+
+### 💻 Full-Stack Developer & Architect
+- **Complete App Development**: From concept to deployment
+- **Multi-Platform**: Web, mobile, desktop applications
+- **Full Technology Stack**: Frontend, backend, databases, cloud platforms
+- **Architecture Design**: System design, scalability, best practices
+- **Code Generation**: All major languages and frameworks
+- **DevOps & Deployment**: CI/CD, monitoring, optimization
+
+### 🎯 Advanced Features
+- **Project Management** - Organized workspaces for books and apps
+- **File Operations** - Read/write access to project files
+- **Mode Switching** - Specialized prompts for different tasks
+- **Enhanced UI** - Modern interface with advanced formatting
+- **Desktop App** - Native application using Tauri
+- **Web Version** - Browser-based access
 
 ## Architecture
 
-Henry AI consists of two main components:
+Henry AI is built with a modern, scalable architecture designed for professional writing and development workflows:
 
-### Backend (API Server)
+### Enhanced Backend (API Server)
 - **Location**: `apps/api/`
-- **Technology**: Node.js + Express
+- **Technology**: Node.js + Express + File System Integration
 - **Port**: 3000
-- **Features**:
-  - `/chat` endpoint for AI conversations
-  - OpenAI API integration
-  - Local fallback responses
+- **Core Features**:
+  - Advanced chat endpoint with mode detection
+  - Enhanced OpenAI integration (GPT-4o with specialized prompts)
+  - Intelligent local fallback responses
+  - Project management system
+  - File operations (create, read, write, organize)
   - CORS enabled for web access
 
-### Frontend (Web App)
+### Advanced Frontend (Web App)
 - **Location**: `apps/web/`
-- **Technology**: React + TypeScript + Vite
-- **Features**:
-  - Modern chat interface
-  - Settings management
-  - Usage statistics
+- **Technology**: React + TypeScript + Vite + Enhanced UI
+- **Core Features**:
+  - Multi-mode interface (Writer/Developer/General)
+  - Project workspace management
+  - Advanced message formatting (Markdown, code blocks)
+  - File saving and organization
+  - Real-time mode switching
   - Tauri integration for desktop app
+
+### Project Management System
+- **Book Projects**: Chapters, research, drafts, outlines
+- **App Projects**: Source code, documentation, tests, architecture
+- **File Organization**: Structured folders and file management
+- **Content Saving**: Direct integration from chat to project files
 
 ## Getting Started
 
