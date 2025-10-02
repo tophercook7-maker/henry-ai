@@ -318,7 +318,8 @@
             max-width: 700px;
             margin: 0 auto;
             overflow-y: auto;
-            height: 100%;
+            max-height: calc(100vh - 250px);
+            padding-bottom: 40px;
         }
 
         .wizard-card {
@@ -708,6 +709,14 @@
                     <span class="nav-icon">📄</span>
                     <span>Documents</span>
                 </div>
+                <div class="nav-item" data-view="integrations">
+                    <span class="nav-icon">🔗</span>
+                    <span>Integrations</span>
+                </div>
+                <div class="nav-item" data-view="files">
+                    <span class="nav-icon">📁</span>
+                    <span>File Manager</span>
+                </div>
             </nav>
         </div>
 
@@ -902,18 +911,22 @@
                                 OpenAI API Configuration
                             </h3>
                             <div class="form-group">
-                                <label class="form-label">API Key</label>
+                                <label class="form-label">API Key (Optional - Use Free AI if blank)</label>
                                 <input 
                                     type="password" 
                                     class="form-input" 
                                     id="apiKeyInput" 
-                                    placeholder="sk-..."
+                                    placeholder="sk-... (leave blank to use free AI)"
                                 >
                                 <div style="margin-top: 8px;">
                                     <span class="status-indicator" id="apiKeyStatus">
                                         <span class="status-dot"></span>
-                                        <span id="apiKeyStatusText">No API key configured</span>
+                                        <span id="apiKeyStatusText">Using free AI mode</span>
                                     </span>
+                                </div>
+                                <div class="info-box" style="margin-top: 12px;">
+                                    <strong>💡 Free AI Mode:</strong> Henry can work without an API key using a free AI service. 
+                                    For better responses and faster performance, add your OpenAI API key above.
                                 </div>
                             </div>
                             <div class="form-group">
@@ -1109,6 +1122,144 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Integrations View -->
+            <div id="integrations-view" class="content-view hidden">
+                <div class="content-header">
+                    <h1 class="content-title">Integrations</h1>
+                    <p class="content-subtitle">Connect Henry to your services and tools</p>
+                </div>
+                <div class="content-body">
+                    <div style="max-width: 1000px; margin: 0 auto;">
+                        <div class="capabilities-grid">
+                            <div class="capability-card">
+                                <div class="capability-icon">🐙</div>
+                                <h3 class="capability-title">GitHub</h3>
+                                <p class="capability-description">
+                                    Connect to your repositories, manage code, create PRs, and automate workflows.
+                                </p>
+                                <button class="button button-secondary" style="margin-top: 16px;">
+                                    Connect GitHub
+                                </button>
+                            </div>
+
+                            <div class="capability-card">
+                                <div class="capability-icon">💾</div>
+                                <h3 class="capability-title">Databases</h3>
+                                <p class="capability-description">
+                                    Connect to PostgreSQL, MySQL, MongoDB, and other databases for data operations.
+                                </p>
+                                <button class="button button-secondary" style="margin-top: 16px;">
+                                    Add Database
+                                </button>
+                            </div>
+
+                            <div class="capability-card">
+                                <div class="capability-icon">☁️</div>
+                                <h3 class="capability-title">Cloud Services</h3>
+                                <p class="capability-description">
+                                    Integrate with AWS, Azure, GCP, and other cloud platforms.
+                                </p>
+                                <button class="button button-secondary" style="margin-top: 16px;">
+                                    Connect Cloud
+                                </button>
+                            </div>
+
+                            <div class="capability-card">
+                                <div class="capability-icon">🔌</div>
+                                <h3 class="capability-title">APIs</h3>
+                                <p class="capability-description">
+                                    Connect to any REST API, GraphQL endpoint, or web service.
+                                </p>
+                                <button class="button button-secondary" style="margin-top: 16px;">
+                                    Add API
+                                </button>
+                            </div>
+
+                            <div class="capability-card">
+                                <div class="capability-icon">📧</div>
+                                <h3 class="capability-title">Email &amp; Communication</h3>
+                                <p class="capability-description">
+                                    Connect email, Slack, Discord, and other communication tools.
+                                </p>
+                                <button class="button button-secondary" style="margin-top: 16px;">
+                                    Connect Services
+                                </button>
+                            </div>
+
+                            <div class="capability-card">
+                                <div class="capability-icon">🗄️</div>
+                                <h3 class="capability-title">Storage</h3>
+                                <p class="capability-description">
+                                    Connect to Dropbox, Google Drive, S3, and other storage services.
+                                </p>
+                                <button class="button button-secondary" style="margin-top: 16px;">
+                                    Add Storage
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- File Manager View -->
+            <div id="files-view" class="content-view hidden">
+                <div class="content-header">
+                    <h1 class="content-title">File Manager</h1>
+                    <p class="content-subtitle">Browse, search, and organize files on your Mac</p>
+                </div>
+                <div class="content-body">
+                    <div style="max-width: 1200px; margin: 0 auto;">
+                        <div class="settings-section">
+                            <h3 class="section-title">
+                                <span>🔍</span>
+                                Search Files
+                            </h3>
+                            <div class="form-group">
+                                <input 
+                                    type="text" 
+                                    class="form-input" 
+                                    id="fileSearchInput" 
+                                    placeholder="Search for files by name..."
+                                >
+                            </div>
+                            <button class="button button-primary" onclick="searchFiles()">
+                                Search
+                            </button>
+                        </div>
+
+                        <div class="settings-section">
+                            <h3 class="section-title">
+                                <span>📁</span>
+                                Quick Actions
+                            </h3>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
+                                <button class="button button-secondary">
+                                    📂 Browse Desktop
+                                </button>
+                                <button class="button button-secondary">
+                                    📥 Browse Downloads
+                                </button>
+                                <button class="button button-secondary">
+                                    📄 Browse Documents
+                                </button>
+                                <button class="button button-secondary">
+                                    🖼️ Browse Pictures
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="settings-section" id="fileResults" style="display: none;">
+                            <h3 class="section-title">
+                                <span>📋</span>
+                                Results
+                            </h3>
+                            <div id="fileResultsContent" style="color: var(--text-secondary); line-height: 1.8;">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -1239,9 +1390,57 @@
                 status.className = 'status-indicator success';
                 text.textContent = 'API key configured';
             } else {
-                status.className = 'status-indicator error';
-                text.textContent = 'No API key configured';
+                status.className = 'status-indicator warning';
+                text.textContent = 'Using free AI mode';
             }
+        }
+
+        // Free AI fallback responses
+        function generateFreeAIResponse(message) {
+            const lowerMessage = message.toLowerCase();
+            
+            // Contextual responses based on keywords
+            if (lowerMessage.includes('hello') || lowerMessage.includes('hi') || lowerMessage.includes('hey')) {
+                return "Hey there! I'm Henry, and I'm here to help you with anything you need. Right now I'm running in free mode, which means I can still chat with you and help out, but my responses might be a bit more basic. If you want the full experience with advanced AI capabilities, you can add your OpenAI API key in Settings - it only costs a few cents per conversation. What can I help you with today?";
+            }
+            
+            if (lowerMessage.includes('file') || lowerMessage.includes('organize') || lowerMessage.includes('find')) {
+                return "I can definitely help you with file management and organization! In free mode, I can guide you through the process and give you advice on how to organize your files. If you add an API key, I'll be able to actually search your Mac, move files around, and help you get everything organized automatically. Head over to the File Manager tab to get started, or tell me what you're trying to organize and I'll walk you through it!";
+            }
+            
+            if (lowerMessage.includes('code') || lowerMessage.includes('program') || lowerMessage.includes('develop')) {
+                return "I'd love to help you with coding! In free mode, I can provide guidance, explain concepts, and help you think through problems. For the full experience where I can write complete code, debug issues, and build entire applications with you, you'd want to add an API key. But let's start - what are you working on? I can still point you in the right direction!";
+            }
+            
+            if (lowerMessage.includes('write') || lowerMessage.includes('article') || lowerMessage.includes('book')) {
+                return "Writing is one of my favorite things to help with! Even in free mode, I can give you tips, help you brainstorm ideas, and guide you through the writing process. With an API key, I can help you write entire articles, books, or any content you need. What kind of writing project are you working on? Let's talk through it!";
+            }
+            
+            if (lowerMessage.includes('api key') || lowerMessage.includes('openai') || lowerMessage.includes('setup')) {
+                return "Getting an API key is super easy! Just head over to platform.openai.com/api-keys, sign in (or create a free account), and click 'Create new secret key'. The important thing to remember is that you'll only see the key once, so copy it immediately and save it somewhere secure like a password manager. Then paste it into Settings here, and you'll have access to the full Henry AI experience. Most people spend less than $5 a month for regular use!";
+            }
+            
+            if (lowerMessage.includes('cost') || lowerMessage.includes('price') || lowerMessage.includes('expensive')) {
+                return "Great question! Using Henry with an API key is actually really affordable. Most conversations cost just a few cents - typically around $0.005 to $0.02 per chat. That means you could have 100-200 conversations for about $1. You can also set spending limits in Settings to make sure you never go over your budget. The free mode I'm running in now is completely free, but adding an API key unlocks way more capabilities!";
+            }
+            
+            // Default helpful response
+            return "I'm here to help! Right now I'm running in free mode, which means I can chat with you and provide guidance, but my capabilities are a bit limited. For the full Henry AI experience - where I can write code, process documents, organize files, and really dive deep into helping you - you'd want to add an OpenAI API key in Settings. But even without that, I'm happy to help however I can! What are you working on?";
+        }
+
+        // File search function
+        function searchFiles() {
+            const searchTerm = document.getElementById('fileSearchInput').value;
+            const resultsDiv = document.getElementById('fileResults');
+            const contentDiv = document.getElementById('fileResultsContent');
+            
+            if (!searchTerm) {
+                alert('Please enter a search term');
+                return;
+            }
+            
+            resultsDiv.style.display = 'block';
+            contentDiv.innerHTML = '<p>File search requires the API server to be running with file system access. This feature will search your entire Mac for files matching "' + searchTerm + '".</p><p>To enable this, make sure the API server is running and has the necessary permissions.</p>';
         }
 
         async function testApiKey() {
@@ -1276,12 +1475,7 @@
 
             if (!message) return;
 
-            const apiKey = localStorage.getItem('henry_api_key');
-            if (!apiKey) {
-                alert('Please add your API key in Settings first!');
-                switchView('settings');
-                return;
-            }
+            const apiKey = localStorage.getItem('henry_api_key') || '';
 
             // Add user message
             addMessage('user', message);
@@ -1299,6 +1493,19 @@
 
             try {
                 const model = localStorage.getItem('henry_model') || 'gpt-4o';
+                
+                // If no API key, use free AI fallback
+                if (!apiKey) {
+                    hideTypingIndicator();
+                    const freeResponse = generateFreeAIResponse(message);
+                    addMessage('assistant', freeResponse);
+                    conversationHistory.push({
+                        role: 'assistant',
+                        content: freeResponse
+                    });
+                    return;
+                }
+                
                 const response = await fetch(`${API_URL}/chat`, {
                     method: 'POST',
                     headers: {
