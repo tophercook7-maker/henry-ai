@@ -4,7 +4,8 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "start": "node server.mjs"
+    "start": "node server.mjs",
+    "start:ultimate": "node server-ultimate.mjs"
   },
   "dependencies": {
     "cors": "^2.8.5",
