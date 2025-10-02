@@ -136,10 +136,11 @@
 
         .content-body {
             flex: 1;
-            overflow-y: auto;
+            overflow-y: scroll;
             overflow-x: hidden;
             padding: 32px;
-            height: 100%;
+            min-height: 0;
+            -webkit-overflow-scrolling: touch;
         }
 
         /* Chat Interface */
@@ -709,10 +710,7 @@
                     <span class="nav-icon">📄</span>
                     <span>Documents</span>
                 </div>
-                <div class="nav-item" data-view="integrations">
-                    <span class="nav-icon">🔗</span>
-                    <span>Integrations</span>
-                </div>
+                
                 <div class="nav-item" data-view="files">
                     <span class="nav-icon">📁</span>
                     <span>File Manager</span>
@@ -764,9 +762,9 @@
 
                             <div class="capability-card" onclick="switchView('chat')">
                                 <div class="capability-icon">🔗</div>
-                                <h3 class="capability-title">Integrations</h3>
+                                <h3 class="capability-title">Connect to Anything</h3>
                                 <p class="capability-description">
-                                    Connect to GitHub, databases, APIs, cloud services - integrate with anything you need.
+                                    Connect Henry to your accounts and services - he'll help you set everything up step by step.
                                 </p>
                             </div>
 
@@ -911,22 +909,36 @@
                                 OpenAI API Configuration
                             </h3>
                             <div class="form-group">
-                                <label class="form-label">API Key (Optional - Use Free AI if blank)</label>
+                                <label class="form-label">OpenAI API Key</label>
                                 <input 
                                     type="password" 
                                     class="form-input" 
                                     id="apiKeyInput" 
-                                    placeholder="sk-... (leave blank to use free AI)"
+                                    placeholder="sk-..."
                                 >
                                 <div style="margin-top: 8px;">
                                     <span class="status-indicator" id="apiKeyStatus">
                                         <span class="status-dot"></span>
-                                        <span id="apiKeyStatusText">Using free AI mode</span>
+                                        <span id="apiKeyStatusText">No API key configured</span>
                                     </span>
                                 </div>
-                                <div class="info-box" style="margin-top: 12px;">
-                                    <strong>💡 Free AI Mode:</strong> Henry can work without an API key using a free AI service. 
-                                    For better responses and faster performance, add your OpenAI API key above.
+                                <div class="warning-box" style="margin-top: 12px;">
+                                    <span class="warning-icon">⚠️</span>
+                                    <div class="warning-text">
+                                        <strong>Free Mode is LIMITED:</strong> Without an API key, Henry can only give basic responses. 
+                                        He can't write code, process documents, or do complex tasks.
+                                        <br><br>
+                                        <strong>Why Get an API Key?</strong>
+                                        <ul style="margin: 8px 0 0 20px; line-height: 1.8;">
+                                            <li><strong>Full Capabilities:</strong> Write code, process documents, analyze data, and more</li>
+                                            <li><strong>Super Cheap:</strong> Most conversations cost $0.005 - $0.02 (less than 2 cents!)</li>
+                                            <li><strong>No Subscription:</strong> Only pay for what you use, not monthly fees</li>
+                                            <li><strong>You Control Costs:</strong> Set spending limits below to never go over budget</li>
+                                            <li><strong>Real-Time Tracking:</strong> See exactly what you're spending as you chat</li>
+                                        </ul>
+                                        <br>
+                                        <strong>💰 Cost Example:</strong> 100 conversations = ~$1.00. Way cheaper than any subscription!
+                                    </div>
                                 </div>
                             </div>
                             <div class="form-group">
@@ -1042,20 +1054,37 @@
                         <div class="settings-section">
                             <h3 class="section-title">
                                 <span>💡</span>
-                                Cost Information
+                                Why This is WAY Cheaper Than Subscriptions
                             </h3>
-                            <p style="color: var(--text-secondary); line-height: 1.8; margin-bottom: 16px;">
-                                Henry AI uses OpenAI's API, which charges based on the number of tokens (words) processed. 
-                                Here's what you can expect:
-                            </p>
-                            <ul style="color: var(--text-secondary); line-height: 2; margin-left: 20px;">
-                                <li><strong>GPT-4o:</strong> ~$0.005 per conversation (recommended)</li>
-                                <li><strong>GPT-4o Mini:</strong> ~$0.001 per conversation (budget-friendly)</li>
-                                <li><strong>GPT-4 Turbo:</strong> ~$0.02 per conversation (most capable)</li>
+                            <div style="background: var(--bg-tertiary); padding: 20px; border-radius: 12px; margin-bottom: 16px;">
+                                <h4 style="color: var(--text-primary); margin-bottom: 12px;">💰 Real Cost Comparison:</h4>
+                                <ul style="color: var(--text-secondary); line-height: 2; margin-left: 20px;">
+                                    <li><strong>ChatGPT Plus:</strong> $20/month subscription</li>
+                                    <li><strong>Henry AI with API:</strong> ~$1-5/month (pay only for what you use!)</li>
+                                    <li><strong>Savings:</strong> $15-19/month = $180-228/year!</li>
+                                </ul>
+                            </div>
+                            
+                            <h4 style="color: var(--text-primary); margin-bottom: 12px;">📊 Actual Costs Per Message:</h4>
+                            <ul style="color: var(--text-secondary); line-height: 2; margin-left: 20px; margin-bottom: 16px;">
+                                <li><strong>GPT-4o (Recommended):</strong> $0.005-$0.02 per message (0.5¢ - 2¢)</li>
+                                <li><strong>GPT-4o Mini (Budget):</strong> $0.001-$0.005 per message (0.1¢ - 0.5¢)</li>
+                                <li><strong>100 conversations:</strong> ~$1.00 (vs $20 subscription!)</li>
                             </ul>
-                            <p style="color: var(--text-secondary); line-height: 1.8; margin-top: 16px;">
-                                Most users spend less than $5/month for regular use. You can set spending limits in Settings 
-                                to ensure you never exceed your budget.
+                            
+                            <div class="info-box">
+                                <strong>🎯 You Control Everything:</strong>
+                                <ul style="margin: 8px 0 0 20px; line-height: 1.8;">
+                                    <li>Set daily spending limits (e.g., $1/day)</li>
+                                    <li>Set monthly spending limits (e.g., $10/month)</li>
+                                    <li>See real-time costs after every message</li>
+                                    <li>Track total spending in this dashboard</li>
+                                    <li>Get alerts before hitting your limits</li>
+                                </ul>
+                            </div>
+                            
+                            <p style="color: var(--text-primary); line-height: 1.8; margin-top: 16px; font-weight: 600;">
+                                💡 Most people spend $1-5/month with regular use. That's 75-95% cheaper than subscriptions!
                             </p>
                         </div>
                     </div>
@@ -1123,84 +1152,7 @@
                 </div>
             </div>
 
-            <!-- Integrations View -->
-            <div id="integrations-view" class="content-view hidden">
-                <div class="content-header">
-                    <h1 class="content-title">Integrations</h1>
-                    <p class="content-subtitle">Connect Henry to your services and tools</p>
-                </div>
-                <div class="content-body">
-                    <div style="max-width: 1000px; margin: 0 auto;">
-                        <div class="capabilities-grid">
-                            <div class="capability-card">
-                                <div class="capability-icon">🐙</div>
-                                <h3 class="capability-title">GitHub</h3>
-                                <p class="capability-description">
-                                    Connect to your repositories, manage code, create PRs, and automate workflows.
-                                </p>
-                                <button class="button button-secondary" style="margin-top: 16px;">
-                                    Connect GitHub
-                                </button>
-                            </div>
-
-                            <div class="capability-card">
-                                <div class="capability-icon">💾</div>
-                                <h3 class="capability-title">Databases</h3>
-                                <p class="capability-description">
-                                    Connect to PostgreSQL, MySQL, MongoDB, and other databases for data operations.
-                                </p>
-                                <button class="button button-secondary" style="margin-top: 16px;">
-                                    Add Database
-                                </button>
-                            </div>
-
-                            <div class="capability-card">
-                                <div class="capability-icon">☁️</div>
-                                <h3 class="capability-title">Cloud Services</h3>
-                                <p class="capability-description">
-                                    Integrate with AWS, Azure, GCP, and other cloud platforms.
-                                </p>
-                                <button class="button button-secondary" style="margin-top: 16px;">
-                                    Connect Cloud
-                                </button>
-                            </div>
-
-                            <div class="capability-card">
-                                <div class="capability-icon">🔌</div>
-                                <h3 class="capability-title">APIs</h3>
-                                <p class="capability-description">
-                                    Connect to any REST API, GraphQL endpoint, or web service.
-                                </p>
-                                <button class="button button-secondary" style="margin-top: 16px;">
-                                    Add API
-                                </button>
-                            </div>
-
-                            <div class="capability-card">
-                                <div class="capability-icon">📧</div>
-                                <h3 class="capability-title">Email &amp; Communication</h3>
-                                <p class="capability-description">
-                                    Connect email, Slack, Discord, and other communication tools.
-                                </p>
-                                <button class="button button-secondary" style="margin-top: 16px;">
-                                    Connect Services
-                                </button>
-                            </div>
-
-                            <div class="capability-card">
-                                <div class="capability-icon">🗄️</div>
-                                <h3 class="capability-title">Storage</h3>
-                                <p class="capability-description">
-                                    Connect to Dropbox, Google Drive, S3, and other storage services.
-                                </p>
-                                <button class="button button-secondary" style="margin-top: 16px;">
-                                    Add Storage
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            
 
             <!-- File Manager View -->
             <div id="files-view" class="content-view hidden">
@@ -1388,44 +1340,47 @@
 
             if (hasKey) {
                 status.className = 'status-indicator success';
-                text.textContent = 'API key configured';
+                text.textContent = 'API key configured - Full capabilities enabled!';
             } else {
-                status.className = 'status-indicator warning';
-                text.textContent = 'Using free AI mode';
+                status.className = 'status-indicator error';
+                text.textContent = 'No API key - Limited free mode only';
             }
         }
 
-        // Free AI fallback responses
+        // Free AI fallback responses - LIMITED VERSION
         function generateFreeAIResponse(message) {
             const lowerMessage = message.toLowerCase();
             
-            // Contextual responses based on keywords
+            // Always emphasize limitations and value of API key
+            const apiKeyPitch = "\n\n💡 **Want the full Henry experience?** Add your OpenAI API key in Settings. It's super cheap (most chats cost less than 2 cents!) and unlocks everything - code writing, document processing, file organization, and way smarter responses. No monthly subscription, just pay for what you use!";
+            
+            // Very basic responses to show limitations
             if (lowerMessage.includes('hello') || lowerMessage.includes('hi') || lowerMessage.includes('hey')) {
-                return "Hey there! I'm Henry, and I'm here to help you with anything you need. Right now I'm running in free mode, which means I can still chat with you and help out, but my responses might be a bit more basic. If you want the full experience with advanced AI capabilities, you can add your OpenAI API key in Settings - it only costs a few cents per conversation. What can I help you with today?";
+                return "Hey! I'm Henry, but I'm running in limited free mode right now. I can only give you basic responses and guidance. I can't write code, process documents, or do any of the cool stuff I'm designed for." + apiKeyPitch;
             }
             
-            if (lowerMessage.includes('file') || lowerMessage.includes('organize') || lowerMessage.includes('find')) {
-                return "I can definitely help you with file management and organization! In free mode, I can guide you through the process and give you advice on how to organize your files. If you add an API key, I'll be able to actually search your Mac, move files around, and help you get everything organized automatically. Head over to the File Manager tab to get started, or tell me what you're trying to organize and I'll walk you through it!";
+            if (lowerMessage.includes('code') || lowerMessage.includes('program') || lowerMessage.includes('app')) {
+                return "I'd love to help you code, but I can't in free mode! Without an API key, I can only give you general advice. I can't write actual code, debug problems, or build applications. That's what I'm really good at, but I need an API key to do it." + apiKeyPitch;
             }
             
-            if (lowerMessage.includes('code') || lowerMessage.includes('program') || lowerMessage.includes('develop')) {
-                return "I'd love to help you with coding! In free mode, I can provide guidance, explain concepts, and help you think through problems. For the full experience where I can write complete code, debug issues, and build entire applications with you, you'd want to add an API key. But let's start - what are you working on? I can still point you in the right direction!";
+            if (lowerMessage.includes('write') || lowerMessage.includes('article') || lowerMessage.includes('book') || lowerMessage.includes('content')) {
+                return "Writing is one of my specialties, but not in free mode! I can't write articles, books, or any real content without an API key. I can only give you basic tips. To actually help you write, I need full access." + apiKeyPitch;
             }
             
-            if (lowerMessage.includes('write') || lowerMessage.includes('article') || lowerMessage.includes('book')) {
-                return "Writing is one of my favorite things to help with! Even in free mode, I can give you tips, help you brainstorm ideas, and guide you through the writing process. With an API key, I can help you write entire articles, books, or any content you need. What kind of writing project are you working on? Let's talk through it!";
+            if (lowerMessage.includes('file') || lowerMessage.includes('organize') || lowerMessage.includes('find') || lowerMessage.includes('search')) {
+                return "File organization is something I'm great at, but I can't do it in free mode! I need an API key to actually search your Mac, organize files, and help you get everything sorted. Right now I can only talk about it." + apiKeyPitch;
             }
             
-            if (lowerMessage.includes('api key') || lowerMessage.includes('openai') || lowerMessage.includes('setup')) {
-                return "Getting an API key is super easy! Just head over to platform.openai.com/api-keys, sign in (or create a free account), and click 'Create new secret key'. The important thing to remember is that you'll only see the key once, so copy it immediately and save it somewhere secure like a password manager. Then paste it into Settings here, and you'll have access to the full Henry AI experience. Most people spend less than $5 a month for regular use!";
+            if (lowerMessage.includes('document') || lowerMessage.includes('pdf') || lowerMessage.includes('analyze')) {
+                return "Document processing is a key feature, but it doesn't work in free mode! I need an API key to read, analyze, and summarize documents. Without it, I'm pretty limited." + apiKeyPitch;
             }
             
-            if (lowerMessage.includes('cost') || lowerMessage.includes('price') || lowerMessage.includes('expensive')) {
-                return "Great question! Using Henry with an API key is actually really affordable. Most conversations cost just a few cents - typically around $0.005 to $0.02 per chat. That means you could have 100-200 conversations for about $1. You can also set spending limits in Settings to make sure you never go over your budget. The free mode I'm running in now is completely free, but adding an API key unlocks way more capabilities!";
+            if (lowerMessage.includes('api') || lowerMessage.includes('key') || lowerMessage.includes('setup') || lowerMessage.includes('cost') || lowerMessage.includes('price')) {
+                return "Here's the deal: Getting an API key is easy and CHEAP!\n\n1. Go to platform.openai.com/api-keys\n2. Sign in (free account)\n3. Click 'Create new secret key'\n4. Copy it immediately (you only see it once!)\n5. Paste it in Settings\n\n**Cost:** Most conversations are $0.005-$0.02 (less than 2 cents!). That's 100 conversations for ~$1. Way cheaper than any subscription! Plus you can set spending limits so you never go over budget. The Usage & Costs tab shows you exactly what you're spending in real-time.";
             }
             
-            // Default helpful response
-            return "I'm here to help! Right now I'm running in free mode, which means I can chat with you and provide guidance, but my capabilities are a bit limited. For the full Henry AI experience - where I can write code, process documents, organize files, and really dive deep into helping you - you'd want to add an OpenAI API key in Settings. But even without that, I'm happy to help however I can! What are you working on?";
+            // Default response emphasizing limitations
+            return "I'm in limited free mode, so I can only give you basic responses. I can't write code, process documents, organize files, or do any of the advanced stuff I'm designed for. To unlock my full capabilities, you'll need to add an OpenAI API key in Settings." + apiKeyPitch;
         }
 
         // File search function
@@ -1611,9 +1566,22 @@
             sessionStats.tokens += usage.total_tokens;
             sessionStats.messages += 1;
 
+            // Update session stats
             document.getElementById('sessionCost').textContent = `$${sessionStats.cost.toFixed(4)}`;
             document.getElementById('sessionTokens').textContent = sessionStats.tokens.toLocaleString();
             document.getElementById('messageCount').textContent = sessionStats.messages;
+            
+            // Show cost in chat after each message
+            showCostNotification(costs.totalCost);
+        }
+        
+        function showCostNotification(cost) {
+            const messagesContainer = document.getElementById('messages');
+            const costDiv = document.createElement('div');
+            costDiv.style.cssText = 'text-align: center; padding: 8px; margin: 8px 0; color: var(--text-secondary); font-size: 13px; opacity: 0.7;';
+            costDiv.innerHTML = `💰 This message cost: $${parseFloat(cost).toFixed(4)} (~${(parseFloat(cost) * 100).toFixed(2)}¢)`;
+            messagesContainer.appendChild(costDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
         }
 
         async function trackUsage(usage, costs) {
