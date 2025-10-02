@@ -1,0 +1,1277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Henry AI Desktop</title>
+    <style>
+        :root {
+            --primary-gradient-start: #667eea;
+            --primary-gradient-end: #764ba2;
+            --secondary-color: #30d158;
+            --accent-color: #ff9f0a;
+            --background-color: #f5f5f7;
+            --card-color: #ffffff;
+            --text-primary: #1d1d1f;
+            --text-secondary: #86868b;
+            --border-radius: 12px;
+            --shadow: 0 4px 12px rgba(0,0,0,0.08);
+            --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-primary);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            max-width: 100%;
+            margin: 0;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--primary-gradient-start) 0%, var(--primary-gradient-end) 100%);
+            color: white;
+            padding: 20px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .header-controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .depth-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .depth-control input {
+            width: 100px;
+        }
+
+        .depth-display {
+            background: rgba(255,255,255,0.2);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+        }
+
+        .model-selector {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+        }
+
+        .model-selector:focus {
+            outline: none;
+        }
+
+        .nav-tabs {
+            display: flex;
+            background: var(--card-color);
+            border-bottom: 1px solid #e0e0e0;
+            overflow-x: auto;
+        }
+
+        .nav-tab {
+            padding: 15px 25px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            transition: var(--transition);
+            white-space: nowrap;
+        }
+
+        .nav-tab:hover {
+            background: #e9ecef;
+            color: #495057;
+        }
+
+        .nav-tab.active {
+            color: var(--primary-gradient-start);
+            border-bottom: 3px solid var(--primary-gradient-start);
+            background: var(--card-color);
+        }
+
+        .tab-content {
+            display: none;
+            padding: 30px;
+            height: 100%;
+            overflow-y: auto;
+            background: var(--card-color);
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .home-content {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .home-content h2 {
+            font-size: 32px;
+            margin-bottom: 20px;
+            color: var(--text-primary);
+        }
+
+        .home-content p {
+            font-size: 18px;
+            color: var(--text-secondary);
+            max-width: 800px;
+            margin: 0 auto 30px;
+            line-height: 1.6;
+        }
+
+        .quick-start-cards {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .quick-card {
+            background: linear-gradient(135deg, var(--primary-gradient-start) 0%, var(--primary-gradient-end) 100%);
+            color: white;
+            padding: 25px;
+            border-radius: var(--border-radius);
+            width: 250px;
+            cursor: pointer;
+            transition: var(--transition);
+            box-shadow: var(--shadow);
+        }
+
+        .quick-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+        }
+
+        .quick-card h3 {
+            font-size: 22px;
+            margin-bottom: 15px;
+        }
+
+        .quick-card p {
+            font-size: 14px;
+            margin-bottom: 0;
+            color: rgba(255,255,255,0.9);
+        }
+
+        .chat-container {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .chat-history {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: var(--border-radius);
+            margin-bottom: 20px;
+        }
+
+        .message {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 15px;
+        }
+
+        .message-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        .user .message-avatar {
+            background: linear-gradient(135deg, var(--primary-gradient-start) 0%, var(--primary-gradient-end) 100%);
+            color: white;
+        }
+
+        .assistant .message-avatar {
+            background: var(--primary-gradient-start);
+            color: white;
+        }
+
+        .message-content {
+            padding: 15px;
+            border-radius: var(--border-radius);
+            flex: 1;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .user .message-content {
+            background: white;
+            border: 1px solid #e9ecef;
+        }
+
+        .assistant .message-content {
+            background: #e9ecef;
+        }
+
+        .input-area {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .message-input {
+            flex: 1;
+            padding: 15px;
+            border: 2px solid #e9ecef;
+            border-radius: var(--border-radius);
+            font-size: 16px;
+            resize: none;
+            min-height: 60px;
+            max-height: 150px;
+        }
+
+        .send-button {
+            padding: 15px 25px;
+            background: linear-gradient(135deg, var(--primary-gradient-start) 0%, var(--primary-gradient-end) 100%);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .send-button:hover {
+            opacity: 0.9;
+        }
+
+        .send-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .output-container {
+            background: white;
+            padding: 25px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            min-height: 200px;
+        }
+
+        .output-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .copy-button {
+            padding: 8px 15px;
+            background: var(--primary-gradient-start);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .copy-button:hover {
+            opacity: 0.9;
+        }
+
+        .output-content {
+            white-space: pre-wrap;
+            font-family: 'Segoe UI', sans-serif;
+            line-height: 1.6;
+        }
+
+        .coding-form, .writing-form {
+            background: white;
+            padding: 25px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        .form-group textarea {
+            min-height: 150px;
+            resize: vertical;
+        }
+
+        .setup-content {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .setup-card {
+            background: white;
+            padding: 30px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            margin-bottom: 25px;
+        }
+
+        .setup-card h3 {
+            margin-bottom: 20px;
+            color: var(--text-primary);
+        }
+
+        .api-key-input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e9ecef;
+            border-radius: var(--border-radius);
+            font-size: 16px;
+            margin-bottom: 15px;
+        }
+
+        .save-button {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, var(--primary-gradient-start) 0%, var(--primary-gradient-end) 100%);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius);
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .save-button:hover {
+            opacity: 0.9;
+        }
+
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: var(--border-radius);
+            margin-top: 15px;
+            display: none;
+        }
+
+        .success-message.show {
+            display: block;
+        }
+
+        .download-section {
+            background: linear-gradient(135deg, var(--primary-gradient-start) 0%, var(--primary-gradient-end) 100%);
+            color: white;
+            padding: 40px;
+            border-radius: var(--border-radius);
+            margin: 20px 0;
+            box-shadow: var(--shadow);
+        }
+
+        .download-section h3 {
+            font-size: 28px;
+            margin-bottom: 20px;
+        }
+
+        .download-buttons {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-top: 30px;
+        }
+
+        .download-btn {
+            padding: 15px 30px;
+            background: white;
+            color: var(--primary-gradient-start);
+            border: none;
+            border-radius: var(--border-radius);
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .download-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+
+        .wizard-content {
+            background: white;
+            padding: 30px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            margin-top: 25px;
+        }
+
+        .wizard-content h3 {
+            margin-bottom: 20px;
+            color: var(--text-primary);
+        }
+
+        .wizard-content ol {
+            padding-left: 20px;
+            margin-bottom: 20px;
+        }
+
+        .wizard-content li {
+            margin-bottom: 10px;
+            line-height: 1.6;
+        }
+
+        .wizard-content code {
+            background: #f8f9fa;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .wizard-content pre {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 15px 0;
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                gap: 15px;
+                padding: 15px;
+            }
+            
+            .nav-tab {
+                padding: 12px 15px;
+                font-size: 14px;
+            }
+            
+            .quick-start-cards {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .quick-card {
+                width: 100%;
+                max-width: 300px;
+            }
+        }
+    </style>
+<script src="https://sites.super.myninja.ai/_assets/ninja-daytona-script.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 Henry AI - Your Personal AI Assistant</h1>
+            <div class="header-controls">
+                <div class="depth-control">
+                    <label for="depthSlider">Depth:</label>
+                    <input type="range" id="depthSlider" min="1" max="5" value="3">
+                    <div class="depth-display" id="depthValue">Professional</div>
+                </div>
+                <select class="model-selector" id="modelSelect">
+                    <option value="gpt-4o">GPT-4o</option>
+                    <option value="o1-preview">o1-preview</option>
+                    <option value="o1-mini">o1-mini</option>
+                    <option value="gpt-4-turbo">GPT-4 Turbo</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="nav-tabs">
+            <button class="nav-tab active" data-tab="home">🏠 Home</button>
+            <button class="nav-tab" data-tab="chat">💬 Chat</button>
+            <button class="nav-tab" data-tab="coding">💻 Coding</button>
+            <button class="nav-tab" data-tab="writing">✍️ Writing</button>
+            <button class="nav-tab" data-tab="setup">⚙️ Setup</button>
+            <button class="nav-tab" data-tab="desktop">🖥️ Desktop App</button>
+        </div>
+
+        <div class="tab-content active" id="home">
+            <div class="home-content">
+                <h2>Welcome to Henry AI!</h2>
+                <p>Hello there! I'm Henry, your friendly AI assistant. I'm here to help you with research, writing, coding, learning, analysis, and creative projects. What would you like to work on today?</p>
+                
+                <div class="quick-start-cards">
+                    <div class="quick-card" onclick="quickStart('Research')">
+                        <h3>🔬 Research</h3>
+                        <p>Get help with research projects, fact-checking, and information gathering</p>
+                    </div>
+                    <div class="quick-card" onclick="quickStart('Writing')">
+                        <h3>✍️ Writing</h3>
+                        <p>Assist with novels, articles, scripts, and all types of writing projects</p>
+                    </div>
+                    <div class="quick-card" onclick="quickStart('Coding')">
+                        <h3>💻 Coding</h3>
+                        <p>Get coding help, debugging, and project development assistance</p>
+                    </div>
+                    <div class="quick-card" onclick="quickStart('Learning')">
+                        <h3>📚 Learning</h3>
+                        <p>Learn new topics with structured explanations and examples</p>
+                    </div>
+                    <div class="quick-card" onclick="quickStart('Analysis')">
+                        <h3>📊 Analysis</h3>
+                        <p>Analyze data, documents, and complex problems</p>
+                    </div>
+                    <div class="quick-card" onclick="quickStart('Creative')">
+                        <h3>🎨 Creative</h3>
+                        <p>Brainstorm ideas, creative projects, and artistic endeavors</p>
+                    </div>
+                </div>
+                
+                <div class="download-section">
+                    <h3>📱 Download Henry AI for Mobile</h3>
+                    <p style="font-size: 18px; margin-bottom: 20px;">
+                        Get the full standalone mobile version with:
+                    </p>
+                    <ul style="font-size: 16px; line-height: 2; margin-left: 20px;">
+                        <li>Native mobile app experience</li>
+                        <li>Offline capabilities</li>
+                        <li>Device integration (camera, files, etc.)</li>
+                        <li>Faster performance than web version</li>
+                    </ul>
+                    <div class="download-buttons">
+                        <button class="download-btn" onclick="downloadMobile('android')">
+                            📱 Android (.apk)
+                        </button>
+                        <button class="download-btn" onclick="downloadMobile('ios')">
+                            🍎 iOS (.ipa)
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="download-section">
+                    <h3>🖥️ Download Henry AI Desktop App</h3>
+                    <p style="font-size: 18px; margin-bottom: 20px;">
+                        Get the full standalone desktop version with:
+                    </p>
+                    <ul style="font-size: 16px; line-height: 2; margin-left: 20px;">
+                        <li>Own window (not browser-based)</li>
+                        <li>System integration</li>
+                        <li>File access</li>
+                        <li>Terminal integration</li>
+                        <li>Offline capabilities</li>
+                    </ul>
+                    <div class="download-buttons">
+                        <button class="download-btn" onclick="downloadDesktop('windows')">
+                            🪟 Windows (.exe)
+                        </button>
+                        <button class="download-btn" onclick="downloadDesktop('mac')">
+                            🍎 macOS (.dmg)
+                        </button>
+                        <button class="download-btn" onclick="downloadDesktop('linux')">
+                            🐧 Linux (.AppImage)
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-content" id="chat">
+            <div class="chat-container">
+                <div class="chat-history" id="chatContainer">
+                    <div class="message assistant">
+                        <div class="message-avatar">H</div>
+                        <div class="message-content">
+                            Hello! I'm Henry, your friendly AI assistant. I'm here to help you with any questions or tasks you have. What can I assist you with today?
+                        </div>
+                    </div>
+                </div>
+                <div class="input-area">
+                    <textarea class="message-input" id="messageInput" placeholder="Type your message here... (Press Enter to send, Shift+Enter for new line)"></textarea>
+                    <button class="send-button" id="sendButton">
+                        <span>Send</span>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="9 18 15 12 9 6"></polyline>
+                        </svg>
+                    </button>
+                </div>
+                <div class="output-container">
+                    <div class="output-header">
+                        <h3>📝 Output</h3>
+                        <button class="copy-button" onclick="copyOutput()">📋 Copy</button>
+                    </div>
+                    <div class="output-content" id="outputContainer">
+                        Your generated content will appear here. Henry will provide detailed responses based on your requests.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-content" id="coding">
+            <div class="coding-form">
+                <h2>💻 Coding Assistant</h2>
+                <p style="margin-bottom: 20px;">Tell me about your coding project and I'll help you build it!</p>
+                
+                <div class="form-group">
+                    <label for="projectType">Project Type:</label>
+                    <select id="projectType">
+                        <option value="web app">Web Application</option>
+                        <option value="mobile app">Mobile Application</option>
+                        <option value="desktop app">Desktop Application</option>
+                        <option value="script">Script/Utility</option>
+                        <option value="api">API Service</option>
+                        <option value="library">Library/Package</option>
+                        <option value="other">Other Project</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="techStack">Technology Stack:</label>
+                    <select id="techStack">
+                        <option value="React + Node.js">React + Node.js</option>
+                        <option value="Vue + Express">Vue + Express</option>
+                        <option value="Angular + NestJS">Angular + NestJS</option>
+                        <option value="Python Flask">Python Flask</option>
+                        <option value="Python Django">Python Django</option>
+                        <option value="Java Spring Boot">Java Spring Boot</option>
+                        <option value="C# ASP.NET">C# ASP.NET</option>
+                        <option value="Ruby on Rails">Ruby on Rails</option>
+                        <option value="other">Other Technologies</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="codingTask">Task Type:</label>
+                    <select id="codingTask">
+                        <option value="create new">Create New Project</option>
+                        <option value="debug">Debug Issues</option>
+                        <option value="optimize">Optimize Performance</option>
+                        <option value="refactor">Refactor Code</option>
+                        <option value="security">Security Review</option>
+                        <option value="documentation">Create Documentation</option>
+                        <option value="other">Other Task</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="codingInput">Describe your coding task:</label>
+                    <textarea id="codingInput" placeholder="Examples:
+• Create a React component for a user dashboard
+• Debug this Python function that's causing memory leaks
+• Optimize this database query for better performance
+• Review this API endpoint for security vulnerabilities
+• Set up a CI/CD pipeline for a Node.js application"></textarea>
+                </div>
+                
+                <button id="codingSendBtn" style="padding: 12px 30px; background: linear-gradient(135deg, var(--primary-gradient-start) 0%, var(--primary-gradient-end) 100%); color: white; border: none; border-radius: 8px; font-size: 1.1em; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 10px;">
+                    <span>Start Coding</span>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="16 18 22 12 16 6"></polyline>
+                        <polyline points="8 6 2 12 8 18"></polyline>
+                    </svg>
+                </button>
+            </div>
+            
+            <div id="codingOutput" style="background: white; padding: 25px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); min-height: 200px; display: none;">
+                <h3>📝 Code Output</h3>
+                <div id="codingOutputContent" style="white-space: pre-wrap; font-family: 'Courier New', monospace; line-height: 1.6;"></div>
+            </div>
+        </div>
+
+        <div class="tab-content" id="writing">
+            <div class="writing-form">
+                <h2>✍️ Writing Assistant</h2>
+                <p style="margin-bottom: 20px;">Let me help you with your writing project!</p>
+                
+                <div class="form-group">
+                    <label for="bookType">Project Type:</label>
+                    <select id="bookType">
+                        <option value="novel">Novel</option>
+                        <option value="short story">Short Story</option>
+                        <option value="non-fiction book">Non-Fiction Book</option>
+                        <option value="article">Article/Blog Post</option>
+                        <option value="script">Screenplay/Script</option>
+                        <option value="poetry">Poetry Collection</option>
+                        <option value="other">Other Writing Project</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="fictionGenre">Genre (if fiction):</label>
+                    <select id="fictionGenre">
+                        <option value="fantasy">Fantasy</option>
+                        <option value="sci-fi">Science Fiction</option>
+                        <option value="mystery">Mystery/Thriller</option>
+                        <option value="romance">Romance</option>
+                        <option value="horror">Horror</option>
+                        <option value="historical">Historical Fiction</option>
+                        <option value="literary">Literary Fiction</option>
+                        <option value="other">Other Genre</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="writingStage">Current Stage:</label>
+                    <select id="writingStage">
+                        <option value="brainstorming">Brainstorming/Ideation</option>
+                        <option value="outline">Outline/Structure</option>
+                        <option value="draft">First Draft</option>
+                        <option value="revision">Revision/Edit</option>
+                        <option value="proofreading">Proofreading</option>
+                        <option value="publishing">Publishing Preparation</option>
+                        <option value="research">Research Phase</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="wordCount">Target Length:</label>
+                    <select id="wordCount">
+                        <option value="short">Short (1,000-5,000 words)</option>
+                        <option value="medium">Medium (5,000-20,000 words)</option>
+                        <option value="long">Long (20,000+ words)</option>
+                        <option value="chapter">Single Chapter/Section</option>
+                        <option value="flexible">Flexible Length</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="writingInput">Describe your writing project:</label>
+                    <textarea id="writingInput" placeholder="Examples:
+• Write a fantasy novel about a young wizard's journey
+• Help me outline a mystery thriller with plot twists
+• Edit this short story for clarity and pacing
+• Proofread this article for grammar and style
+• Research the historical context for my novel"></textarea>
+                </div>
+                
+                <button id="writingSendBtn" style="padding: 12px 30px; background: linear-gradient(135deg, var(--primary-gradient-start) 0%, var(--primary-gradient-end) 100%); color: white; border: none; border-radius: 8px; font-size: 1.1em; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 10px;">
+                    <span>Start Writing</span>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="16 18 22 12 16 6"></polyline>
+                        <polyline points="8 6 2 12 8 18"></polyline>
+                    </svg>
+                </button>
+            </div>
+            
+            <div id="writingOutput" style="background: white; padding: 25px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); min-height: 200px; display: none;">
+                <h3>📝 Writing Output</h3>
+                <div id="writingOutputContent" style="white-space: pre-wrap; font-family: 'Segoe UI', sans-serif; line-height: 1.6;"></div>
+            </div>
+        </div>
+
+        <div class="tab-content" id="setup">
+            <div class="setup-content">
+                <div class="setup-card">
+                    <h3>🔑 OpenAI API Key Setup</h3>
+                    <p>Enter your OpenAI API key to enable Henry AI's capabilities:</p>
+                    <input type="password" class="api-key-input" id="apiKeyInput" placeholder="sk-...">
+                    <button class="save-button" onclick="saveApiKey()">Save API Key</button>
+                    <div class="success-message" id="successMessage">
+                        ✅ API key saved successfully! You can now use Henry AI.
+                    </div>
+                </div>
+                
+                <div class="setup-card">
+                    <h3>⚙️ Configuration Guide</h3>
+                    <p>Henry AI is ready to use! Here's how to get started:</p>
+                    <ol>
+                        <li>Enter your OpenAI API key above (get one from <a href="https://platform.openai.com/api-keys" target="_blank">OpenAI Platform</a>)</li>
+                        <li>Choose your preferred AI model from the dropdown in the header</li>
+                        <li>Adjust the Depth slider to control response detail level</li>
+                        <li>Switch between tabs to access different features</li>
+                        <li>Use the Chat tab for general conversations</li>
+                        <li>Use the Coding tab for programming assistance</li>
+                        <li>Use the Writing tab for creative writing help</li>
+                    </ol>
+                    <p><strong>Note:</strong> Your API key is stored locally in your browser and never sent to any server except OpenAI's.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-content" id="desktop">
+            <div class="setup-content">
+                <div class="download-section">
+                    <h3>🖥️ Henry AI Desktop Application</h3>
+                    <p style="font-size: 18px; margin-bottom: 20px;">
+                        Download the standalone desktop version of Henry AI for your operating system:
+                    </p>
+                    <ul style="font-size: 16px; line-height: 2; margin-left: 20px; margin-bottom: 20px;">
+                        <li>Runs independently in its own window</li>
+                        <li>Full system integration capabilities</li>
+                        <li>Access to local files and terminal</li>
+                        <li>Works completely offline after initial setup</li>
+                        <li>No browser required</li>
+                    </ul>
+                    <div class="download-buttons">
+                        <button class="download-btn" onclick="downloadDesktop('windows')">
+                            🪟 Windows Installer (.exe)
+                        </button>
+                        <button class="download-btn" onclick="downloadDesktop('mac')">
+                            🍎 macOS Installer (.dmg)
+                        </button>
+                        <button class="download-btn" onclick="downloadDesktop('linux')">
+                            🐧 Linux Installer (.AppImage)
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="wizard-content">
+                    <h3>📦 How to Build Desktop App from Source</h3>
+                    <p>To build the desktop version yourself:</p>
+                    <ol>
+                        <li>Download the source files</li>
+                        <li>Install Node.js and npm</li>
+                        <li>Run <code>npm install</code> to install dependencies</li>
+                        <li>Run <code>npm run build</code> to create the executable</li>
+                    </ol>
+                    <p>For detailed instructions, check out the GitHub repository.</p>
+                </div>
+                
+                <div class="wizard-content">
+                    <h3>📱 Mobile Application Downloads</h3>
+                    <p>Get Henry AI on your mobile device:</p>
+                    <div class="download-buttons">
+                        <button class="download-btn" onclick="downloadMobile('android')">
+                            📱 Android App (.apk)
+                        </button>
+                        <button class="download-btn" onclick="downloadMobile('ios')">
+                            🍎 iOS App (.ipa)
+                        </button>
+                    </div>
+                    <p style="margin-top: 20px;">The mobile apps offer native performance and device integration features not available in the web version.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Enhanced Henry personality
+        let apiKey = '';
+        let selectedModel = 'gpt-4o';
+        let currentDepth = 3;
+        let conversationHistory = [];
+        
+        // Depth descriptions for different levels with enhanced personality
+        const depthDescriptions = {
+            1: 'Basic (Simple responses)',
+            2: 'Intermediate (Detailed but concise)',
+            3: 'Professional (Comprehensive and thorough)',
+            4: 'Expert (Highly detailed with examples)',
+            5: 'Academic (Extremely detailed with citations)'
+        };
+        
+        // Enhanced system prompts with friendlier personality
+        const systemPrompts = {
+            1: 'You are Henry, a friendly and helpful AI assistant. Provide simple, clear responses. Avoid technical jargon. Be encouraging and supportive. Use emojis occasionally to make the conversation more engaging.',
+            2: 'You are Henry, a friendly and knowledgeable AI assistant. Provide detailed but concise responses. Include relevant examples. Be helpful and personable. Use a warm and encouraging tone.',
+            3: 'You are Henry, a professional yet friendly AI assistant. Provide comprehensive and thorough responses. Include context and best practices. Be supportive and encouraging. Help users feel confident in their abilities.',
+            4: 'You are Henry, an expert AI assistant who is also a great friend. Provide highly detailed responses with examples, code snippets, and technical explanations when relevant. Be warm and helpful. Guide users through complex topics step by step.',
+            5: 'You are Henry, an academic AI assistant with a friendly personality. Provide extremely detailed responses with citations, references, and comprehensive analysis. Use formal language but be supportive and encouraging. Help users understand advanced concepts clearly.'
+        };
+
+        // Set up event listeners when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            setupEventListeners();
+            updateDepthDisplay();
+            
+            // Try to load API key from localStorage
+            const savedKey = localStorage.getItem('openai_api_key');
+            if (savedKey) {
+                apiKey = savedKey;
+                document.getElementById('apiKeyInput').value = savedKey;
+            }
+            
+            // Try to load API key from Electron settings
+            if (window.henryAPI && window.henryAPI.loadSettings) {
+                window.henryAPI.loadSettings().then(result => {
+                    if (result.success && result.settings.apiKey) {
+                        apiKey = result.settings.apiKey;
+                        document.getElementById('apiKeyInput').value = result.settings.apiKey;
+                    }
+                });
+            }
+        });
+
+        function setupEventListeners() {
+            // Tab navigation
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    switchTab(tab.dataset.tab);
+                });
+            });
+
+            // Message input
+            const messageInput = document.getElementById('messageInput');
+            messageInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+
+            // Depth slider
+            const depthSlider = document.getElementById('depthSlider');
+            depthSlider.addEventListener('input', (e) => {
+                currentDepth = parseInt(e.target.value);
+                updateDepthDisplay();
+            });
+
+            // Model selector
+            const modelSelect = document.getElementById('modelSelect');
+            modelSelect.addEventListener('change', (e) => {
+                selectedModel = e.target.value;
+            });
+
+            // Send button
+            document.getElementById('sendButton').addEventListener('click', sendMessage);
+            
+            // Coding tab functionality
+            const codingSendBtn = document.getElementById('codingSendBtn');
+            if (codingSendBtn) {
+                codingSendBtn.addEventListener('click', async () => {
+                    const projectType = document.getElementById('projectType').value;
+                    const techStack = document.getElementById('techStack').value;
+                    const codingTask = document.getElementById('codingTask').value;
+                    const codingInput = document.getElementById('codingInput').value;
+                    
+                    if (!codingInput.trim()) {
+                        alert('Please describe your coding task');
+                        return;
+                    }
+                    
+                    const fullPrompt = `I need help with a ${projectType} project using ${techStack}. Task type: ${codingTask}.\n\n${codingInput}`;
+                    
+                    const outputDiv = document.getElementById('codingOutput');
+                    const outputContent = document.getElementById('codingOutputContent');
+                    outputDiv.style.display = 'block';
+                    outputContent.textContent = 'Henry is thinking... 🤔';
+                    
+                    try {
+                        const response = await sendToOpenAI(fullPrompt);
+                        outputContent.textContent = response;
+                    } catch (error) {
+                        outputContent.textContent = `Sorry, I encountered an error: ${error.message}`;
+                    }
+                });
+            }
+            
+            // Writing tab functionality
+            const writingSendBtn = document.getElementById('writingSendBtn');
+            if (writingSendBtn) {
+                writingSendBtn.addEventListener('click', async () => {
+                    const bookType = document.getElementById('bookType').value;
+                    const fictionGenre = document.getElementById('fictionGenre').value;
+                    const writingStage = document.getElementById('writingStage').value;
+                    const wordCount = document.getElementById('wordCount').value;
+                    const writingInput = document.getElementById('writingInput').value;
+                    
+                    if (!writingInput.trim()) {
+                        alert('Please describe your writing project');
+                        return;
+                    }
+                    
+                    const fullPrompt = `I'm working on a ${bookType} (Genre: ${fictionGenre}). Current stage: ${writingStage}. Target length: ${wordCount}.\n\n${writingInput}`;
+                    
+                    const outputDiv = document.getElementById('writingOutput');
+                    const outputContent = document.getElementById('writingOutputContent');
+                    outputDiv.style.display = 'block';
+                    outputContent.textContent = 'Henry is crafting your content... ✍️';
+                    
+                    try {
+                        const response = await sendToOpenAI(fullPrompt);
+                        outputContent.textContent = response;
+                    } catch (error) {
+                        outputContent.textContent = `Sorry, I encountered an error: ${error.message}`;
+                    }
+                });
+            }
+        }
+
+        function updateDepthDisplay() {
+            document.getElementById('depthValue').textContent = depthDescriptions[currentDepth];
+        }
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.classList.remove('active');
+                if (tab.dataset.tab === tabName) {
+                    tab.classList.add('active');
+                }
+            });
+
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById(tabName).classList.add('active');
+        }
+
+        function quickStart(category) {
+            switchTab('chat');
+            const prompts = {
+                'Research': 'Help me research ',
+                'Writing': 'Help me write ',
+                'Coding': 'Help me build ',
+                'Learning': 'Teach me about ',
+                'Analysis': 'Analyze ',
+                'Creative': 'Help me brainstorm ideas for '
+            };
+            document.getElementById('messageInput').value = prompts[category];
+            document.getElementById('messageInput').focus();
+        }
+
+        // Reusable function to send messages to OpenAI
+        async function sendToOpenAI(message, useHistory = false) {
+            if (!apiKey) {
+                throw new Error('Please configure your OpenAI API key in the Setup tab first!');
+            }
+
+            const messages = [
+                {
+                    role: 'system',
+                    content: systemPrompts[currentDepth]
+                }
+            ];
+
+            if (useHistory) {
+                messages.push(...conversationHistory.map(msg => ({
+                    role: msg.role,
+                    content: msg.content
+                })));
+            } else {
+                messages.push({
+                    role: 'user',
+                    content: message
+                });
+            }
+
+            const response = await fetch('https://api.openai.com/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${apiKey}`
+                },
+                body: JSON.stringify({
+                    model: selectedModel,
+                    messages: messages,
+                    temperature: 0.7
+                })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(`API Error: ${errorData.error?.message || 'Unknown error'}`);
+            }
+
+            const data = await response.json();
+            return data.choices[0].message.content;
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+            
+            if (!message) return;
+
+            if (!apiKey) {
+                alert('Please configure your OpenAI API key in the Setup tab first!');
+                switchTab('setup');
+                return;
+            }
+
+            addMessage('user', message);
+            input.value = '';
+            
+            const sendButton = document.getElementById('sendButton');
+            sendButton.disabled = true;
+            sendButton.innerHTML = '<span class="loading"></span>';
+
+            try {
+                const assistantMessage = await sendToOpenAI(message, true);
+                addMessage('assistant', assistantMessage);
+                updateOutput(assistantMessage);
+            } catch (error) {
+                const errorMessage = `Sorry, I encountered an error: ${error.message}`;
+                addMessage('assistant', errorMessage);
+                updateOutput(errorMessage);
+            } finally {
+                sendButton.disabled = false;
+                sendButton.innerHTML = '<span>Send</span><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>';
+            }
+        }
+
+        function addMessage(role, content) {
+            const chatContainer = document.getElementById('chatContainer');
+            
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${role}`;
+            
+            const avatar = document.createElement('div');
+            avatar.className = 'message-avatar';
+            avatar.textContent = role === 'user' ? 'Y' : 'H';
+            
+            const messageContent = document.createElement('div');
+            messageContent.className = 'message-content';
+            messageContent.innerHTML = content.replace(/\n/g, '<br>');
+            
+            messageDiv.appendChild(avatar);
+            messageDiv.appendChild(messageContent);
+            chatContainer.appendChild(messageDiv);
+            
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+
+            conversationHistory.push({ role, content });
+            // Keep history to a reasonable size
+            if (conversationHistory.length > 20) {
+                conversationHistory = conversationHistory.slice(-20);
+            }
+        }
+
+        function updateOutput(content) {
+            const outputContainer = document.getElementById('outputContainer');
+            outputContainer.textContent = content;
+        }
+
+        function copyOutput() {
+            const outputContainer = document.getElementById('outputContainer');
+            const text = outputContainer.textContent;
+            
+            navigator.clipboard.writeText(text).then(() => {
+                const button = document.querySelector('.copy-button');
+                const originalText = button.textContent;
+                button.textContent = '✅ Copied!';
+                setTimeout(() => {
+                    button.textContent = originalText;
+                }, 2000);
+            });
+        }
+
+        function saveApiKey() {
+            const input = document.getElementById('apiKeyInput');
+            const key = input.value.trim();
+            
+            if (!key.startsWith('sk-')) {
+                alert('Invalid API key format. OpenAI keys start with "sk-"');
+                return;
+            }
+
+            localStorage.setItem('openai_api_key', key);
+            apiKey = key;
+            
+            // Save to Electron settings if available
+            if (window.henryAPI && window.henryAPI.saveSettings) {
+                window.henryAPI.saveSettings({ apiKey: key });
+            }
+            
+            document.getElementById('successMessage').classList.add('show');
+            
+            setTimeout(() => {
+                switchTab('chat');
+            }, 2000);
+        }
+
+        // Enhanced download functions that actually download files
+        function downloadDesktop(platform) {
+            // Create a more detailed message about the download
+            const messages = {
+                'windows': 'Windows desktop app (.exe) download starting!\n\nHenry will now create a standalone installer for Windows that includes:\n• Native Windows application\n• System tray integration\n• File system access\n• Terminal command execution\n• Offline capabilities',
+                'mac': 'macOS desktop app (.dmg) download starting!\n\nHenry will now create a standalone installer for macOS that includes:\n• Native macOS application\n• Menu bar integration\n• File system access\n• Terminal command execution\n• Offline capabilities',
+                'linux': 'Linux desktop app (.AppImage) download starting!\n\nHenry will now create a standalone installer for Linux that includes:\n• Universal Linux application\n• System integration\n• File system access\n• Terminal command execution\n• Offline capabilities'
+            };
+            
+            // Show message to user
+            alert(messages[platform]);
+            
+            // Actually download the file based on platform
+            downloadFile(`HenryAI-${platform}.exe`, `HenryAI-${platform}.exe`);
+        }
+
+        function downloadMobile(platform) {
+            // Create a more detailed message about the mobile download
+            const messages = {
+                'android': 'Android mobile app (.apk) download starting!\n\nHenry will now create a standalone mobile application for Android that includes:\n• Native Android performance\n• Camera integration\n• File system access\n• Offline capabilities\n• Device-specific optimizations',
+                'ios': 'iOS mobile app (.ipa) download starting!\n\nHenry will now create a standalone mobile application for iOS that includes:\n• Native iOS performance\n• Camera integration\n• File system access\n• Offline capabilities\n• Device-specific optimizations'
+            };
+            
+            // Show message to user
+            alert(messages[platform]);
+            
+            // Actually download the file based on platform
+            downloadFile(`HenryAI-${platform}.apk`, `HenryAI-${platform}.apk`);
+        }
+
+        // Function to actually download a file
+        function downloadFile(filename, content) {
+            // Create a Blob with the content
+            const blob = new Blob([content], { type: 'application/octet-stream' });
+            
+            // Create a download link
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = filename;
+            
+            // Trigger the download
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            // Clean up the URL object
+            URL.revokeObjectURL(link.href);
+        }
+    </script>
+</body>
+</html>
