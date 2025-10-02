@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title>Henry AI</title>
+    <link rel="stylesheet" href="/public/style.css">
+  </head>
+  <body>
+    <div id="app" class="app">
+      <div class="topbar">
+        <button id="btn-toggle" class="toggle" title="Hide/Show sidebar">☰</button>
+        <div class="brand">Henry AI</div>
+        <div class="spacer"></div>
+        <span class="pill">model: <span id="pill-model">–</span></span>
+        <span class="pill">chars: <span id="pill-chars">0</span></span>
+        <span class="pill">$ <span id="pill-cost">0.0000</span></span>
+      </div>
+
+      <aside class="sidebar">
+        <h3>Tabs</h3>
+        <button class="navbtn" data-tab="chat">Chat</button>
+        <button class="navbtn" data-tab="files">Files</button>
+        <button class="navbtn" data-tab="projects">Projects</button>
+        <button class="navbtn" data-tab="terminal">Terminal</button>
+        <button class="navbtn" data-tab="writer">Writer</button>
+        <button class="navbtn" data-tab="settings">Settings</button>
+        <button class="navbtn" data-tab="help">Help</button>
+      </aside>
+
+      <main class="main">
+        <div id="panel-chat" class="thread">
+          <div class="msg assistant"><div class="bubble">👋 Hi, I’m Henry. Enter sends; Shift+Enter makes a newline.</div><button class="copy" data-no-chat>Copy</button></div>
+        </div>
+
+        <div id="panel-files" class="thread hidden">
+          <div class="msg assistant"><div class="bubble">
+            <b>Files</b><br/><br/>
+            <input id="filepick" type="file" multiple /><br/><br/>
+            <button id="btn-upload" class="send" data-no-chat>Upload</button>
+            <div id="files-log"></div>
+          </div></div>
+        </div>
+
+        <div id="panel-projects" class="thread hidden">
+          <div class="msg assistant"><div class="bubble">
+            <b>Project / GitHub</b><br/><br/>
+            <button id="btn-gh" class="send" data-no-chat>Show GitHub Repo Info</button>
+            <pre id="gh-log" class="log"></pre>
+          </div></div>
+        </div>
+
+        <div id="panel-terminal" class="thread hidden">
+          <div class="msg assistant"><div class="bubble">
+            <b>Local Helpers</b> <span class="warn">(opt-in; safe whitelist)</span><br/><br/>
+            <label><input type="checkbox" id="chk-admin"/> Enable local helpers</label><br/><br/>
+            <button id="btn-git-status" class="send" data-no-chat>git status</button>
+            <button id="btn-gh-view" class="send" data-no-chat>gh repo view</button>
+            <button id="btn-xcode-sdks" class="send" data-no-chat>xcodebuild -showsdks</button>
+            <pre id="term-log" class="log"></pre>
+          </div></div>
+        </div>
+
+        <div id="panel-writer" class="thread hidden">
+          <div class="msg assistant"><div class="bubble">
+            <b>Writer</b><br/><br/>
+            <div class="kv"><div>Intent</div><input id="w-intent" placeholder="ebook, essay, blog post, script…"/></div>
+            <div class="kv"><div>Topic</div><input id="w-topic" placeholder="What do you want to write about?"/></div>
+            <div class="kv"><div>Audience</div><input id="w-aud" placeholder="Beginners, execs, kids, developers…"/></div>
+            <div class="kv" style="grid-template-columns:150px 1fr;"><div>Notes</div><textarea id="w-notes" rows="6" placeholder="Bullets or constraints…"></textarea></div>
+            <button id="btn-outline" class="send" data-no-chat>Draft Outline</button>
+            <button id="btn-section" class="send" data-no-chat>Write Section</button>
+            <pre id="writer-log" class="log"></pre>
+          </div></div>
+        </div>
+
+        <div id="panel-settings" class="thread hidden">
+          <div class="msg assistant"><div class="bubble">
+            <b>Settings</b><br/><br/>
+            <div class="kv"><div>API Base URL</div><input id="inp-api" placeholder="http://127.0.0.1:3000"/></div>
+            <div class="kv"><div>API Key (optional)</div><input id="inp-key" placeholder="sk-proj-…"/></div>
+            <button id="btn-save" class="send" data-no-chat>Save</button>
+            <span id="save-ok" class="good"></span>
+          </div></div>
+        </div>
+
+        <div id="panel-help" class="thread hidden">
+          <div class="msg assistant"><div class="bubble">
+            <b>Help</b><br/><br/>
+            • Enter sends; Shift+Enter newline.<br/>
+            • Settings saves API Base/Key (kept locally).<br/>
+            • Terminal helpers are opt-in, whitelisted, and header-gated.<br/>
+          </div></div>
+        </div>
+
+        <form id="composer" class="composer" autocomplete="off">
+          <textarea id="input" class="input" placeholder="Type a message…"></textarea>
+          <button id="send" class="send" type="submit">Send</button>
+        </form>
+      </main>
+
+      <div class="footer">Henry AI — local preview</div>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

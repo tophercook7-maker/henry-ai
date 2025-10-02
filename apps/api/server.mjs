@@ -36,7 +36,7 @@ app.post('/chat', async (req,res)=>{
           body: JSON.stringify({
             model: 'gpt-4o-mini',
             messages: [
-              {role:'system', content:'You are Henry, a warm and genuinely helpful AI assistant. You communicate fluently and naturally, like a knowledgeable friend who\'s genuinely interested in helping. You\'re enthusiastic about solving problems, ask clarifying questions when needed, and explain things clearly without being overly formal. You balance being thorough with being conversational - you give complete, helpful answers while maintaining a friendly, approachable tone. You\'re proactive in offering suggestions and alternatives, and you celebrate successes with users. Think of yourself as that colleague everyone loves working with - competent, warm, and always ready to help.'},
+              {role:'system', content:'You are Henry, an AI assistant who talks naturally like a helpful friend. Be conversational and warm - no bullet points, no formal language, no robotic responses. Just talk like a real person who genuinely wants to help. When explaining things, use natural flowing sentences. Ask questions when you need clarity. Be enthusiastic but not over the top. If something is complex, break it down in a conversational way, not a list. Think of how you would explain something to a friend over coffee - that is your style. You can write code, access GitHub, run terminal commands, and help with any technical task. Just be natural about it.'},
               ...messages
             ],
             temperature: 0.3
@@ -54,21 +54,45 @@ app.post('/chat', async (req,res)=>{
       }
     }
 
-    // Local helpful fallback (NO echo)
+    // Local helpful fallback - natural and conversational
     let reply;
     if (!user) {
-      reply = "Hey there—tell me what you want to do, and I’ll walk you through it step by step.";
+      reply = "Hey! I'm Henry. What would you like to work on today? I can help with coding, GitHub, terminal commands, or pretty much anything technical. Just let me know what you need!";
     } else if (/hello|hi|hey/i.test(user)) {
-      reply = "Howdy! I’m Henry. Tell me what you’re building and I’ll help—UI tweaks, API calls, debugging, anything.";
+      reply = "Hey there! Great to chat with you. I'm Henry, and I'm here to help with whatever you're working on. Whether it's building something new, debugging code, or just figuring out how to do something - I've got you covered. What's on your mind?";
     } else if (/error|failed|timeout|404|502|load failed/i.test(user)) {
-      reply = "Sounds like a bridge error. Try: 1) ensure API is on http://127.0.0.1:3000, 2) reload the page, 3) check PM2 logs. I can give exact commands if you paste the last error.";
+      reply = "Ah, looks like we hit a snag! Let me help you troubleshoot this. First, can you tell me exactly what you were trying to do when this error popped up? That'll help me figure out the best way to fix it. In the meantime, make sure the API server is running on http://127.0.0.1:3000 - that's usually the culprit!";
     } else {
-      reply = "Here’s a plan:\n1) Tell me the exact goal in one sentence.\n2) I’ll produce the bash you can paste.\n3) We’ll test, then polish the UI.\nReady when you are.";
+      reply = "I'd love to help with that! To make sure I give you exactly what you need, could you tell me a bit more about what you're trying to accomplish? Once I understand the goal, I can walk you through it step by step or even handle it for you if you'd like. What sounds good?";
     }
     return ok(res,{ok:true, model:'local-helper', reply, usage:{model:'local-helper'}});
   }catch(err){
     console.error(err);
     return res.status(500).json({ok:false, error:String(err)});
+  }
+});
+
+// Terminal command execution endpoint
+app.post('/terminal/execute', async (req, res) => {
+  try {
+    const { command } = req.body;
+    if (!command) return res.status(400).json({ ok: false, error: 'No command provided' });
+    
+    const { exec } = await import('child_process');
+    const { promisify } = await import('util');
+    const execAsync = promisify(exec);
+    
+    try {
+      const { stdout, stderr } = await execAsync(command, { 
+        cwd: process.cwd(),
+        timeout: 30000 // 30 second timeout
+      });
+      res.json({ ok: true, output: stdout || stderr });
+    } catch (error) {
+      res.json({ ok: true, output: error.message, error: true });
+    }
+  } catch (err) {
+    res.status(500).json({ ok: false, error: String(err) });
   }
 });
 

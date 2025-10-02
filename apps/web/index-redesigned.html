@@ -629,24 +629,43 @@
     }
 
     // Terminal
-    function runTerminalCommand() {
+    async function runTerminalCommand() {
       const input = document.getElementById('terminal-input');
       const command = input.value.trim();
       if (!command) return;
       
       const output = document.getElementById('terminal-output');
-      const line = document.createElement('div');
-      line.className = 'terminal-line';
-      line.innerHTML = `<span class="terminal-prompt">henry@ai ~ %</span> ${command}`;
-      output.insertBefore(line, output.lastElementChild);
       
-      // TODO: Execute command via API
-      const result = document.createElement('div');
-      result.className = 'terminal-line';
-      result.textContent = 'Command execution coming soon...';
-      output.insertBefore(result, output.lastElementChild);
+      // Show command
+      const cmdLine = document.createElement('div');
+      cmdLine.className = 'terminal-line';
+      cmdLine.innerHTML = `<span class="terminal-prompt">henry@ai ~ %</span> ${command}`;
+      output.insertBefore(cmdLine, output.lastElementChild);
       
       input.value = '';
+      
+      // Execute command
+      try {
+        const response = await fetch('http://127.0.0.1:3000/terminal/execute', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ command })
+        });
+        
+        const data = await response.json();
+        const result = document.createElement('div');
+        result.className = 'terminal-line';
+        result.textContent = data.output || 'No output';
+        if (data.error) result.style.color = '#fc8181';
+        output.insertBefore(result, output.lastElementChild);
+      } catch (error) {
+        const errLine = document.createElement('div');
+        errLine.className = 'terminal-line';
+        errLine.style.color = '#fc8181';
+        errLine.textContent = `Error: ${error.message}`;
+        output.insertBefore(errLine, output.lastElementChild);
+      }
+      
       output.scrollTop = output.scrollHeight;
     }
 
