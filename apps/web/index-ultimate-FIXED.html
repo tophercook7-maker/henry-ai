@@ -1794,7 +1794,14 @@
                 const resultDiv = document.getElementById('documentResult');
                 const contentDiv = document.getElementById('documentResultContent');
                 resultDiv.style.display = 'block';
-                contentDiv.innerHTML = '<div class="warning-box"><span class="warning-icon">⚠️</span><div class="warning-text"><strong>Processing Error:</strong> ' + error.message + '. Make sure the API server is running and your API key is valid.</div></div>';
+                
+                // Check what the actual problem is
+                const apiKey = localStorage.getItem('henry_api_key');
+                if (!apiKey) {
+                    contentDiv.innerHTML = '<div class="warning-box"><span class="warning-icon">⚠️</span><div class="warning-text"><strong>API Key Required:</strong> You need to add your OpenAI API key in Settings to process documents. It\'s super cheap (usually less than 2¢ per document) and unlocks all of Henry\'s capabilities!</div></div>';
+                } else {
+                    contentDiv.innerHTML = '<div class="warning-box"><span class="warning-icon">⚠️</span><div class="warning-text"><strong>Server Connection Error:</strong> Make sure the API server is running. Open Terminal and run:<br><br><code style="background: var(--bg-primary); padding: 8px; display: block; margin: 8px 0;">cd ~/Desktop/henry-ai/apps/api<br>npm run start:ultimate</code><br>Then try processing the document again.</div></div>';
+                }
             } finally {
                 document.getElementById('processButton').disabled = false;
                 document.getElementById('processButton').textContent = 'Process Document';
