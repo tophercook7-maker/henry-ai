@@ -8,7 +8,8 @@ import { promisify } from 'util';
 const execAsync = promisify(exec);
 const app = express();
 app.use(cors());
-app.use(express.json({limit:'50mb'}));
+app.use(express.json({limit:'100mb'}));
+app.use(express.urlencoded({limit:'100mb', extended: true}));
 
 // Utilities
 const ok = (res, obj) => res.json(obj);
