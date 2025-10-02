@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Henry AI",
+  "productName": "Henry AI Ultimate",
   "version": "1.0.0",
-  "identifier": "ai.henry.app",
+  "identifier": "ai.henry.ultimate",
   "build": {
     "beforeDevCommand": "npm run dev",
     "devUrl": "http://localhost:5173",
@@ -12,13 +12,13 @@
   "app": {
     "windows": [
       {
-        "title": "Henry AI",
-        "width": 1200,
-        "height": 800,
+        "title": "Henry AI Ultimate",
+        "width": 1400,
+        "height": 900,
         "resizable": true,
         "fullscreen": false,
-        "minWidth": 800,
-        "minHeight": 600
+        "minWidth": 1000,
+        "minHeight": 700
       }
     ],
     "security": {
@@ -35,15 +35,15 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
-    "resources": [],
+    "resources": ["../../api/*"],
     "externalBin": [],
-    "copyright": "",
-    "category": "DeveloperTool",
-    "shortDescription": "Henry AI - Your Local AI Assistant",
-    "longDescription": "Henry AI is a local AI chat assistant with a clean web interface that can chat using OpenAI's API or provide helpful local responses.",
+    "copyright": "© 2025 Henry AI",
+    "category": "Productivity",
+    "shortDescription": "Henry AI - Your Ultimate Local AI Assistant",
+    "longDescription": "Henry AI Ultimate is a powerful local AI assistant with natural conversation, document processing, cost tracking, and full file system access. Zero hosting costs - runs completely on your machine!",
     "linux": {
       "deb": {
-        "depends": []
+        "depends": ["nodejs"]
       }
     },
     "macOS": {
