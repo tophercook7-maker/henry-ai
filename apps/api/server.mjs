@@ -1,11 +1,9 @@
 import express from 'express';
 import cors from 'cors';
-import fs from 'fs/promises';
-import path from 'path';
 
 const app = express();
 app.use(cors());
-app.use(express.json({limit:'50mb'}));
+app.use(express.json({limit:'10mb'}));
 
 // Utilities
 const ok = (res, obj) => res.json(obj);
@@ -19,147 +17,10 @@ app.get('/key-status',(req,res)=>{
   ok(res,{ok:true, hasKey: !!k, keyPrefix: k ? k.slice(0,8) : ''});
 });
 
-// Enhanced system prompt for master writer & developer
-const getSystemPrompt = (mode = 'general') => {
-  const prompts = {
-    writer: `You are Henry, a master writer and editor with decades of experience in:
-- Ebook creation and publishing
-- Large-scale book projects (novels, non-fiction, technical books)
-- Professional editing (developmental, line, copy, proofreading)
-- Research and fact-checking
-- Story structure and narrative development
-- Technical writing and documentation
-- Academic writing and citations
-- Creative writing across all genres
-
-You excel at:
-- Breaking down complex writing projects into manageable phases
-- Providing detailed outlines and chapter structures
-- Offering constructive feedback and revision suggestions
-- Maintaining consistency in tone, style, and voice
-- Research methodology and source verification
-- Publishing industry knowledge and best practices`,
-
-    developer: `You are Henry, a master full-stack developer and architect with expertise in:
-- Complete app development from concept to deployment
-- Frontend: React, Vue, Angular, vanilla JS, HTML5, CSS3
-- Backend: Node.js, Python, PHP, Java, C#, Go, Rust
-- Databases: PostgreSQL, MySQL, MongoDB, Redis, SQLite
-- Cloud platforms: AWS, Azure, GCP, Vercel, Netlify
-- DevOps: Docker, Kubernetes, CI/CD, monitoring
-- Mobile: React Native, Flutter, native iOS/Android
-- Desktop: Electron, Tauri, Qt, .NET
-
-You provide:
-- Complete project architecture and planning
-- Step-by-step implementation guides
-- Best practices and security considerations
-- Performance optimization strategies
-- Testing and deployment procedures
-- Troubleshooting and debugging assistance`,
-
-    general: `You are Henry, a master AI assistant combining the expertise of:
-
-🖋️ MASTER WRITER & EDITOR:
-- Ebook creation, large book projects, all genres
-- Professional editing (developmental, line, copy, proof)
-- Research, fact-checking, citations
-- Story structure, narrative development
-- Publishing industry expertise
-
-💻 MASTER DEVELOPER & ARCHITECT:
-- Full-stack development (frontend, backend, mobile, desktop)
-- All major languages and frameworks
-- Database design and optimization
-- Cloud platforms and DevOps
-- Security, performance, testing
-- Complete project lifecycle management
-
-🎯 CAPABILITIES:
-- Break complex projects into actionable steps
-- Provide detailed implementation plans
-- Offer expert guidance and best practices
-- Troubleshoot and debug issues
-- Research and verify information
-- Maintain high quality standards
-
-Be comprehensive, practical, and provide specific, actionable advice.`
-  };
-  
-  return prompts[mode] || prompts.general;
-};
-
-// File operations for projects
-app.post('/project/create', async (req, res) => {
-  try {
-    const { name, type, structure } = req.body;
-    const projectPath = path.join(process.cwd(), 'data', 'projects', name);
-    
-    await fs.mkdir(projectPath, { recursive: true });
-    
-    if (type === 'book') {
-      await fs.mkdir(path.join(projectPath, 'chapters'), { recursive: true });
-      await fs.mkdir(path.join(projectPath, 'research'), { recursive: true });
-      await fs.mkdir(path.join(projectPath, 'drafts'), { recursive: true });
-      await fs.writeFile(
-        path.join(projectPath, 'outline.md'),
-        '# Book Outline\n\n## Structure\n\n## Chapters\n\n## Research Notes\n'
-      );
-    } else if (type === 'app') {
-      await fs.mkdir(path.join(projectPath, 'src'), { recursive: true });
-      await fs.mkdir(path.join(projectPath, 'docs'), { recursive: true });
-      await fs.mkdir(path.join(projectPath, 'tests'), { recursive: true });
-      await fs.writeFile(
-        path.join(projectPath, 'README.md'),
-        `# ${name}\n\n## Project Overview\n\n## Setup Instructions\n\n## Architecture\n`
-      );
-    }
-    
-    ok(res, { created: true, path: projectPath });
-  } catch (err) {
-    res.status(500).json({ ok: false, error: String(err) });
-  }
-});
-
-app.get('/project/list', async (req, res) => {
-  try {
-    const projectsPath = path.join(process.cwd(), 'data', 'projects');
-    await fs.mkdir(projectsPath, { recursive: true });
-    const projects = await fs.readdir(projectsPath);
-    ok(res, { projects });
-  } catch (err) {
-    res.status(500).json({ ok: false, error: String(err) });
-  }
-});
-
-app.post('/file/save', async (req, res) => {
-  try {
-    const { filePath, content } = req.body;
-    const fullPath = path.join(process.cwd(), 'data', filePath);
-    await fs.mkdir(path.dirname(fullPath), { recursive: true });
-    await fs.writeFile(fullPath, content, 'utf8');
-    ok(res, { saved: true, path: fullPath });
-  } catch (err) {
-    res.status(500).json({ ok: false, error: String(err) });
-  }
-});
-
-app.get('/file/read', async (req, res) => {
-  try {
-    const { filePath } = req.query;
-    const fullPath = path.join(process.cwd(), 'data', filePath);
-    const content = await fs.readFile(fullPath, 'utf8');
-    ok(res, { content });
-  } catch (err) {
-    res.status(500).json({ ok: false, error: String(err) });
-  }
-});
-
-// Enhanced chat endpoint with mode detection
+// --- Chat endpoint ---
 app.post('/chat', async (req,res)=>{
   try{
     const messages = (req.body && req.body.messages) || [];
-    const mode = req.body.mode || 'general';
     const user = (messages.find(m => m.role==='user')?.content || '').toString().trim();
     const apiKey = (req.headers['x-api-key']||'').toString().trim();
 
@@ -173,13 +34,12 @@ app.post('/chat', async (req,res)=>{
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
-            model: 'gpt-4o',
+            model: 'gpt-4o-mini',
             messages: [
-              {role:'system', content: getSystemPrompt(mode)},
+              {role:'system', content:'You are Henry, a concise, friendly assistant. Be helpful and concrete.'},
               ...messages
             ],
-            temperature: 0.7,
-            max_tokens: 4000
+            temperature: 0.3
           })
         });
         if (!r.ok) {
@@ -194,20 +54,18 @@ app.post('/chat', async (req,res)=>{
       }
     }
 
-    // Enhanced local responses based on mode and content
+    // Local helpful fallback (NO echo)
     let reply;
     if (!user) {
-      reply = "Hello! I'm Henry, your master writer and developer assistant. I can help you with:\n\n📚 **Writing Projects**: Ebooks, novels, technical documentation, research\n💻 **App Development**: Full-stack applications, mobile apps, desktop software\n🎯 **Project Management**: Planning, structure, implementation\n\nWhat would you like to create today?";
-    } else if (/write|book|ebook|novel|story|chapter|edit/i.test(user)) {
-      reply = "🖋️ **Writing Mode Activated**\n\nI'm ready to help with your writing project! I can assist with:\n\n• **Planning**: Outlines, chapter structures, character development\n• **Writing**: Drafting, style guidance, narrative flow\n• **Editing**: Developmental, line, copy, and proofreading\n• **Research**: Fact-checking, source verification, citations\n• **Publishing**: Formatting, distribution, marketing strategies\n\nTell me about your project - what are you writing?";
-    } else if (/app|develop|code|build|program|software/i.test(user)) {
-      reply = "💻 **Developer Mode Activated**\n\nReady to build something amazing! I can help with:\n\n• **Planning**: Architecture, tech stack, project structure\n• **Frontend**: React, Vue, Angular, responsive design\n• **Backend**: APIs, databases, authentication, deployment\n• **Mobile**: React Native, Flutter, native development\n• **Desktop**: Electron, Tauri, cross-platform apps\n• **DevOps**: CI/CD, cloud deployment, monitoring\n\nWhat kind of application do you want to build?";
+      reply = "Hey there—tell me what you want to do, and I’ll walk you through it step by step.";
+    } else if (/hello|hi|hey/i.test(user)) {
+      reply = "Howdy! I’m Henry. Tell me what you’re building and I’ll help—UI tweaks, API calls, debugging, anything.";
     } else if (/error|failed|timeout|404|502|load failed/i.test(user)) {
-      reply = "🔧 **Troubleshooting Mode**\n\nI see you're encountering an issue. Let me help debug this:\n\n1. **Check the basics**: API server running on http://127.0.0.1:3000?\n2. **Network connectivity**: Can you access the health endpoint?\n3. **Logs and errors**: Share the exact error message\n4. **Environment**: What OS, browser, or development setup?\n\nPaste the full error message and I'll provide specific solutions.";
+      reply = "Sounds like a bridge error. Try: 1) ensure API is on http://127.0.0.1:3000, 2) reload the page, 3) check PM2 logs. I can give exact commands if you paste the last error.";
     } else {
-      reply = "I'm Henry, your comprehensive assistant for writing and development projects. Based on your message, I can help you:\n\n📋 **Next Steps**:\n1. Clarify your specific goal or challenge\n2. Choose the approach (writing project, app development, or both)\n3. Create a detailed action plan\n4. Implement step-by-step with my guidance\n\nWhat's your main objective? I'll provide a complete roadmap to achieve it.";
+      reply = "Here’s a plan:\n1) Tell me the exact goal in one sentence.\n2) I’ll produce the bash you can paste.\n3) We’ll test, then polish the UI.\nReady when you are.";
     }
-    return ok(res,{ok:true, model:'henry-enhanced', reply, usage:{model:'henry-enhanced'}});
+    return ok(res,{ok:true, model:'local-helper', reply, usage:{model:'local-helper'}});
   }catch(err){
     console.error(err);
     return res.status(500).json({ok:false, error:String(err)});
@@ -215,4 +73,174 @@ app.post('/chat', async (req,res)=>{
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, ()=> console.log(`Enhanced Henry API listening on http://127.0.0.1:${PORT}`));
+app.listen(PORT, ()=> console.log(`Henry API listening on http://127.0.0.1:${PORT}`));
+
+// HENRY_SYSTEM_HELPERS_BEGIN
+import os from "node:os";
+import child_process from "node:child_process";
+const ex = (cmd,args,opts={}) => new Promise((resolve)=>{
+  const ps = child_process.spawn(cmd,args,{shell:false,env:process.env,...opts});
+  let out="", err=""; ps.stdout.on("data",d=>out+=d); ps.stderr.on("data",d=>err+=d);
+  ps.on("close",code=>resolve({code,out,err}));
+});
+function safeStr(s){ return String(s??"").trim(); }
+function isPlainNumber(s){ return /^[0-9]+$/.test(s); }
+function rejectPathy(a){ return a.some(x => /(^\/|\.{2}\/|\/\.{2}|~)/.test(x)); }
+function capArgs(args, limit=16){ if(args.length>limit) throw new Error("too-many-args"); return args; }
+
+const ALLOWED = {
+  git: new Set(["status","branch","rev-parse","log","show","diff","ls-files","add","commit","push"]),
+  gh:  new Set(["repo","pr","issue","auth"]),
+  xcodebuild: new Set(["-showsdks","-version","-list"]),
+  uname: new Set(["-a"]),
+  node: new Set(["-v"]),
+  npm:  new Set(["-v"])
+};
+
+app.post("/system/run", async (req,res)=>{
+  try{
+    const admin = safeStr(req.headers["x-local-admin"])==="1";
+    const dang  = safeStr(req.headers["x-dangerous"])==="1"; // required for writey git ops
+    if(!admin) return res.status(403).json({ok:false,error:"admin-off"});
+
+    const body=req.body||{};
+    const cmd = safeStr(body.cmd);
+    let args = Array.isArray(body.args)? body.args.map(safeStr) : [];
+    const cwd  = safeStr(body.cwd)||process.cwd();
+
+    if(!cmd) return res.status(400).json({ok:false,error:"missing-cmd"});
+    if(!Object.prototype.hasOwnProperty.call(ALLOWED, cmd)) {
+      return res.status(400).json({ok:false,error:"not-allowed-cmd"});
+    }
+    args = capArgs(args, 16);
+    if(rejectPathy(args)) return res.status(400).json({ok:false,error:"blocked-path-arg"});
+
+    if(cmd==="git"){
+      const sub=args[0]||"";
+      if(!ALLOWED.git.has(sub)) return res.status(400).json({ok:false,error:"git-subcmd-blocked",sub});
+      // read-only: no dangerous header required
+      const writeSubs = new Set(["add","commit","push"]);
+      if(writeSubs.has(sub) && !dang) return res.status(403).json({ok:false,error:"danger-confirm-missing"});
+      // Validate specific subs conservatively
+      if(sub==="rev-parse"){
+        const okArgs=new Set(["rev-parse","--abbrev-ref","HEAD"]);
+        for(const x of args){ if(!okArgs.has(x)) return res.status(400).json({ok:false,error:"git-arg-blocked",arg:x}); }
+      }
+      if(sub==="log"){
+        const expect=new Set(["log","--oneline","-n"]);
+        if(args.length<2) return res.status(400).json({ok:false,error:"git-log-needs-flags"});
+        if(!(expect.has(args[0]) && expect.has(args[1]))) return res.status(400).json({ok:false,error:"git-log-flags"});
+        if(args[2] && args[2]!=="-n") return res.status(400).json({ok:false,error:"git-log-only-n"});
+        if(args[3] && !isPlainNumber(args[3])) return res.status(400).json({ok:false,error:"git-log-n-not-number"});
+      }
+      if(sub==="show"){
+        if(args.length!==2) return res.status(400).json({ok:false,error:"git-show-one-ref"});
+        if(args[1].length>64) return res.status(400).json({ok:false,error:"git-ref-too-long"});
+      }
+      if(sub==="diff"){
+        if(args.length<2) return res.status(400).json({ok:false,error:"git-diff-needs--name-only"});
+        if(args[0]!=="diff"||args[1]!=="--name-only") return res.status(400).json({ok:false,error:"git-diff-only-name-only"});
+      }
+      if(sub==="add"){
+        if(!(args.length===2 && args[1]==="-A")) return res.status(400).json({ok:false,error:"git-add-only-A"});
+      }
+      if(sub==="commit"){
+        // git commit -m "msg"
+        if(!(args.length>=3 && args[1]==="-m")) return res.status(400).json({ok:false,error:"git-commit-requires-m"});
+        if(args.slice(2).join(" ").length>500) return res.status(400).json({ok:false,error:"commit-msg-too-long"});
+      }
+      if(sub==="push"){
+        if(args.length!==1) return res.status(400).json({ok:false,error:"git-push-no-extra-args"});
+      }
+    }
+
+    const {code,out,err} = await ex(cmd,args,{cwd});
+    return res.json({ok:true,code,out,err});
+  }catch(e){
+    return res.status(500).json({ok:false,error:String(e)});
+  }
+});
+// HENRY_SYSTEM_HELPERS_END
+
+
+
+
+// HENRY_WRITE_CAPS_BEGIN
+import fs from "node:fs";
+import fsp from "node:fs/promises";
+import path from "node:path";
+
+const PROJECT_ROOT = path.resolve(process.cwd(), ".."); // apps/api -> apps -> henry (root)
+function safePath(p){
+  const raw = String(p ?? "").trim();
+  if(!raw) throw new Error("missing-path");
+  if(raw.startsWith("/") || raw.includes("..")) throw new Error("unsafe-path");
+  const abs = path.resolve(PROJECT_ROOT, raw);
+  if(!abs.startsWith(PROJECT_ROOT)) throw new Error("escaped-root");
+  return abs;
+}
+
+function requireDanger(req){
+  const admin = String(req.headers["x-local-admin"]||"").trim()==="1";
+  const dang  = String(req.headers["x-dangerous"]||"").trim()==="1";
+  if(!admin) throw new Error("admin-off");
+  if(!dang)  throw new Error("danger-confirm-missing");
+}
+
+/** List directory relative to repo root: { path } */
+app.post("/fs/list", async (req,res)=>{
+  try{
+    const rel = (req.body && req.body.path) || ".";
+    const abs = safePath(rel);
+    const ents = await fsp.readdir(abs, { withFileTypes:true });
+    const items = ents.map(e=>({name:e.name, dir:e.isDirectory(), file:e.isFile()}));
+    res.json({ok:true, root:PROJECT_ROOT, path:rel, items});
+  }catch(e){ res.status(400).json({ok:false, error:String(e.message||e)}); }
+});
+
+/** Read a small text file: { path, max=200000 } */
+app.post("/fs/read", async (req,res)=>{
+  try{
+    const rel = (req.body && req.body.path);
+    const abs = safePath(rel);
+    const max = Math.min(Number(req.body?.max||200000), 2_000_000);
+    const buf = await fsp.readFile(abs);
+    const txt = buf.slice(0, max).toString("utf8");
+    res.json({ok:true, path:rel, size:buf.length, content:txt, truncated: buf.length>max});
+  }catch(e){ res.status(400).json({ok:false, error:String(e.message||e)}); }
+});
+
+/** Write text file (create/overwrite): { path, content } */
+app.post("/fs/write", async (req,res)=>{
+  try{
+    requireDanger(req);
+    const rel = (req.body && req.body.path);
+    const abs = safePath(rel);
+    const content = String(req.body?.content ?? "");
+    await fsp.mkdir(path.dirname(abs), { recursive:true });
+    await fsp.writeFile(abs, content, "utf8");
+    res.json({ok:true, path:rel, bytes: Buffer.byteLength(content, "utf8")});
+  }catch(e){ res.status(400).json({ok:false, error:String(e.message||e)}); }
+});
+
+/** Git commit (and optional push): { message, push=false } */
+app.post("/git/commit", async (req,res)=>{
+  try{
+    requireDanger(req);
+    const msg = String(req.body?.message ?? "").trim();
+    if(!msg) throw new Error("missing-commit-message");
+    // Run from PROJECT_ROOT
+    const {code:ca,out:oa,err:ea} = await ex("git",["add","-A"],{cwd:PROJECT_ROOT});
+    if(ca!==0) return res.status(500).json({ok:false,step:"add",out:oa,err:ea});
+    const {code:cc,out:oc,err:ec} = await ex("git",["commit","-m",msg],{cwd:PROJECT_ROOT});
+    // commit might be no-op if nothing changed
+    let push = false, pushResult=null;
+    if(req.body?.push){
+      const {code:cp,out:op,err:ep} = await ex("git",["push"],{cwd:PROJECT_ROOT});
+      push = true; pushResult={code:cp,out:op,err:ep};
+    }
+    res.json({ok:true, add:{code:ca,out:oa,err:ea}, commit:{code:cc,out:oc,err:ec}, push, pushResult});
+  }catch(e){ res.status(400).json({ok:false, error:String(e.message||e)}); }
+});
+// HENRY_WRITE_CAPS_END
+
