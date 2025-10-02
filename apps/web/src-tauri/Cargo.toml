@@ -19,5 +19,5 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 tokio = { version = "1", features = ["full"] }
 
-[target."cfg(not(any(target_os = &quot;android&quot;, target_os = &quot;ios&quot;)))".dependencies]
+[target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
 tauri-plugin-shell = "2"
