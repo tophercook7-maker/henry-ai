@@ -129,7 +129,7 @@ function calculateCosts(usage, model) {
   };
 }
 
-// Document processing endpoint
+// Document processing endpoint with chunking for large documents
 app.post('/process-document', async (req, res) => {
   try {
     const { content, action, apiKey } = req.body;
@@ -142,46 +142,133 @@ app.post('/process-document', async (req, res) => {
 
     const systemPrompt = `You are Henry, helping process and analyze documents. Be natural and conversational in your responses.`;
     
-    let userPrompt = '';
-    switch(action) {
-      case 'summarize':
-        userPrompt = `Please read through this document and give me a natural, conversational summary. Don't just list points - explain it like you're telling someone about what you read:\n\n${content}`;
-        break;
-      case 'analyze':
-        userPrompt = `I'd like you to analyze this document. What are the key insights, themes, and important points? Explain it naturally:\n\n${content}`;
-        break;
-      case 'extract':
-        userPrompt = `Can you extract the most important information from this document? Present it in a clear, readable way:\n\n${content}`;
-        break;
-      default:
-        userPrompt = content;
-    }
-
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt }
-        ],
-        max_tokens: 4000,
-        temperature: 0.7
-      })
-    });
-
-    const data = await response.json();
-    const costs = calculateCosts(data.usage, 'gpt-4o');
+    // Check if document is too large (over 100k characters = needs chunking)
+    const needsChunking = content.length > 100000;
     
-    ok(res, {
-      result: data.choices[0].message.content,
-      usage: data.usage,
-      costs
-    });
+    if (needsChunking) {
+      // Split into chunks of ~50k characters
+      const chunkSize = 50000;
+      const chunks = [];
+      for (let i = 0; i < content.length; i += chunkSize) {
+        chunks.push(content.slice(i, i + chunkSize));
+      }
+      
+      console.log(`Processing large document in ${chunks.length} chunks...`);
+      
+      // Process each chunk
+      const chunkSummaries = [];
+      let totalUsage = { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 };
+      
+      for (let i = 0; i < chunks.length; i++) {
+        const chunk = chunks[i];
+        const chunkPrompt = `This is part ${i + 1} of ${chunks.length} of a large document. Please summarize this section:\n\n${chunk}`;
+        
+        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${apiKey}`
+          },
+          body: JSON.stringify({
+            model: 'gpt-4o',
+            messages: [
+              { role: 'system', content: systemPrompt },
+              { role: 'user', content: chunkPrompt }
+            ],
+            max_tokens: 2000,
+            temperature: 0.7
+          })
+        });
+        
+        const data = await response.json();
+        chunkSummaries.push(data.choices[0].message.content);
+        
+        // Accumulate usage
+        totalUsage.prompt_tokens += data.usage.prompt_tokens;
+        totalUsage.completion_tokens += data.usage.completion_tokens;
+        totalUsage.total_tokens += data.usage.total_tokens;
+      }
+      
+      // Now create final summary from all chunk summaries
+      const finalPrompt = `I've summarized a large document in ${chunks.length} parts. Here are the summaries of each part:\n\n${chunkSummaries.map((s, i) => `Part ${i + 1}:\n${s}`).join('\n\n')}\n\nPlease create a comprehensive, cohesive summary of the entire document based on these part summaries. Make it natural and conversational.`;
+      
+      const finalResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o',
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: finalPrompt }
+          ],
+          max_tokens: 4000,
+          temperature: 0.7
+        })
+      });
+      
+      const finalData = await finalResponse.json();
+      
+      // Add final usage
+      totalUsage.prompt_tokens += finalData.usage.prompt_tokens;
+      totalUsage.completion_tokens += finalData.usage.completion_tokens;
+      totalUsage.total_tokens += finalData.usage.total_tokens;
+      
+      const costs = calculateCosts(totalUsage, 'gpt-4o');
+      
+      ok(res, {
+        result: finalData.choices[0].message.content,
+        usage: totalUsage,
+        costs,
+        chunked: true,
+        chunkCount: chunks.length
+      });
+      
+    } else {
+      // Small document - process normally
+      let userPrompt = '';
+      switch(action) {
+        case 'summarize':
+          userPrompt = `Please read through this document and give me a natural, conversational summary. Don't just list points - explain it like you're telling someone about what you read:\n\n${content}`;
+          break;
+        case 'analyze':
+          userPrompt = `I'd like you to analyze this document. What are the key insights, themes, and important points? Explain it naturally:\n\n${content}`;
+          break;
+        case 'extract':
+          userPrompt = `Can you extract the most important information from this document? Present it in a clear, readable way:\n\n${content}`;
+          break;
+        default:
+          userPrompt = content;
+      }
+
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o',
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userPrompt }
+          ],
+          max_tokens: 4000,
+          temperature: 0.7
+        })
+      });
+
+      const data = await response.json();
+      const costs = calculateCosts(data.usage, 'gpt-4o');
+      
+      ok(res, {
+        result: data.choices[0].message.content,
+        usage: data.usage,
+        costs
+      });
+    }
 
   } catch (error) {
     console.error('Document processing error:', error);
