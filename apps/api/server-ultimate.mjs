@@ -142,6 +142,13 @@ app.post('/process-document', async (req, res) => {
 
     const systemPrompt = `You are Henry, helping process and analyze documents. Be natural and conversational in your responses.`;
     
+    // Validate content
+    if (!content || typeof content !== 'string') {
+      return res.status(400).json({
+        error: 'Invalid document content. PDFs need to be converted to text first. For now, please use text files (.txt) or paste the content directly.'
+      });
+    }
+    
     // Check if document is too large (over 100k characters = needs chunking)
     const needsChunking = content.length > 100000;
     

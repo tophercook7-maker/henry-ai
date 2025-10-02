@@ -80,7 +80,7 @@
         .nav-menu {
             flex: 1;
             padding: 16px;
-            overflow-y: scroll;
+            overflow-y: auto;
         }
 
         .nav-item {
@@ -136,11 +136,10 @@
 
         .content-body {
             flex: 1;
-            overflow-y: scroll !important;
+            overflow-y: scroll;
             overflow-x: hidden;
             padding: 32px;
-            padding-bottom: 60px;
-            height: calc(100vh - 180px);
+            min-height: 0;
             -webkit-overflow-scrolling: touch;
         }
 
@@ -156,7 +155,7 @@
 
         .messages-container {
             flex: 1;
-            overflow-y: scroll;
+            overflow-y: auto;
             overflow-x: hidden;
             padding: 24px 0;
             display: flex;
@@ -282,12 +281,9 @@
             font-size: 15px;
             outline: none;
             resize: none;
-            height: 44px;
-            max-height: 44px;
-            min-height: 44px;
+            max-height: 200px;
             font-family: inherit;
             line-height: 1.5;
-            overflow-y: auto;
         }
 
         .message-input::placeholder {
@@ -322,7 +318,7 @@
         .wizard-container {
             max-width: 700px;
             margin: 0 auto;
-            overflow-y: scroll;
+            overflow-y: auto;
             max-height: calc(100vh - 250px);
             padding-bottom: 40px;
         }
@@ -565,7 +561,7 @@
             max-width: 800px;
             margin: 0 auto;
             text-align: center;
-            overflow-y: scroll;
+            overflow-y: auto;
             height: 100%;
         }
 
@@ -740,19 +736,19 @@
                         </p>
 
                         <div class="capabilities-grid">
-                            <div class="capability-card" onclick="startMode('writing')">
+                            <div class="capability-card" onclick="switchView('chat')">
                                 <div class="capability-icon">✍️</div>
                                 <h3 class="capability-title">Writing & Content</h3>
                                 <p class="capability-description">
-                                    I'll write complete articles, books, scripts - anything you need. Not just advice, actual content.
+                                    Create novels, articles, ebooks, scripts - anything written. I'll help with structure, editing, and research.
                                 </p>
                             </div>
 
-                            <div class="capability-card" onclick="startMode('coding')">
+                            <div class="capability-card" onclick="switchView('chat')">
                                 <div class="capability-icon">💻</div>
                                 <h3 class="capability-title">Development & Coding</h3>
                                 <p class="capability-description">
-                                    I'll write complete, working code for you. Web apps, mobile apps, APIs - I build it all.
+                                    Build web apps, mobile apps, APIs, or any software. Full-stack development from concept to deployment.
                                 </p>
                             </div>
 
@@ -760,37 +756,37 @@
                                 <div class="capability-icon">📚</div>
                                 <h3 class="capability-title">Document Processing</h3>
                                 <p class="capability-description">
-                                    I'll read, analyze, and summarize any document. Upload it and I'll process it for you.
+                                    Process, analyze, and summarize documents of any size. PDFs, Word docs, spreadsheets - I handle it all.
                                 </p>
                             </div>
 
-                            <div class="capability-card" onclick="startMode('integration')">
+                            <div class="capability-card" onclick="switchView('chat')">
                                 <div class="capability-icon">🔗</div>
                                 <h3 class="capability-title">Connect to Anything</h3>
                                 <p class="capability-description">
-                                    I'll connect to GitHub, databases, APIs, cloud services - I set it up and use it for you.
+                                    Connect Henry to your accounts and services - he'll help you set everything up step by step.
                                 </p>
                             </div>
 
-                            <div class="capability-card" onclick="startMode('automation')">
+                            <div class="capability-card" onclick="switchView('chat')">
                                 <div class="capability-icon">🤖</div>
                                 <h3 class="capability-title">Automation</h3>
                                 <p class="capability-description">
-                                    I'll write scripts and automation for you. Tell me what's repetitive and I'll automate it.
+                                    Automate repetitive tasks, create workflows, and save time on manual processes.
                                 </p>
                             </div>
 
-                            <div class="capability-card" onclick="startMode('problem-solving')">
+                            <div class="capability-card" onclick="switchView('chat')">
                                 <div class="capability-icon">🎯</div>
                                 <h3 class="capability-title">Problem Solving</h3>
                                 <p class="capability-description">
-                                    I'll research, analyze, and create actual solutions. Not just ideas - real answers.
+                                    Research, analyze, strategize - whatever challenge you're facing, let's solve it together.
                                 </p>
                             </div>
                         </div>
 
                         <div style="margin-top: 48px;">
-                            <button class="button button-primary" onclick="startSetupFlow()" style="font-size: 16px; padding: 16px 32px;">
+                            <button class="button button-primary" onclick="switchView('setup')" style="font-size: 16px; padding: 16px 32px;">
                                 Get Started →
                             </button>
                         </div>
@@ -1190,16 +1186,16 @@
                                 Quick Actions
                             </h3>
                             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
-                                <button class="button button-secondary" onclick="browseFolder('Desktop')">
+                                <button class="button button-secondary">
                                     📂 Browse Desktop
                                 </button>
-                                <button class="button button-secondary" onclick="browseFolder('Downloads')">
+                                <button class="button button-secondary">
                                     📥 Browse Downloads
                                 </button>
-                                <button class="button button-secondary" onclick="browseFolder('Documents')">
+                                <button class="button button-secondary">
                                     📄 Browse Documents
                                 </button>
-                                <button class="button button-secondary" onclick="browseFolder('Pictures')">
+                                <button class="button button-secondary">
                                     🖼️ Browse Pictures
                                 </button>
                             </div>
@@ -1256,6 +1252,11 @@
                 }
             });
 
+            input.addEventListener('input', () => {
+                input.style.height = 'auto';
+                input.style.height = input.scrollHeight + 'px';
+            });
+
             // Document action change
             document.getElementById('documentAction').addEventListener('change', (e) => {
                 const customGroup = document.getElementById('customRequestGroup');
@@ -1284,41 +1285,6 @@
             if (view === 'usage') {
                 loadUsageStats();
             }
-        }
-        
-        // Setup flow with completion
-        function startSetupFlow() {
-            switchView('setup');
-            
-            // Check if already set up
-            const apiKey = localStorage.getItem('henry_api_key');
-            if (apiKey) {
-                // Already set up - go straight to chat
-                setTimeout(() => {
-                    switchView('chat');
-                    addMessage('assistant', "Welcome back! You're all set up and ready to go. I can write code, process documents, organize files, and help with anything you need. What would you like to work on today?");
-                }, 500);
-            }
-        }
-        
-        // Start mode with context
-        function startMode(mode) {
-            switchView('chat');
-            
-            const modeMessages = {
-                'writing': "Hey! I'm ready to help you write. I don't just give advice - I actually write complete content for you. Whether it's an article, book, script, or any other writing project, I'll create it. What would you like me to write?",
-                'coding': "Hey! I'm ready to code with you. I don't just explain concepts - I write complete, working code. Tell me what you want to build and I'll write the actual code for you. What are we building today?",
-                'integration': "Hey! I'm ready to connect services for you. I don't just explain how - I actually set up and use the connections. Want to connect GitHub? A database? An API? Tell me what you need and I'll make it happen.",
-                'automation': "Hey! I'm ready to automate tasks for you. I don't just suggest ideas - I write actual working scripts and automation. What repetitive task would you like me to automate?",
-                'problem-solving': "Hey! I'm ready to solve problems with you. I don't just brainstorm - I research, analyze, and create actual solutions. What challenge are you facing?"
-            };
-            
-            const message = modeMessages[mode] || "Hey! What can I help you with today?";
-            
-            // Add Henry's mode message
-            setTimeout(() => {
-                addMessage('assistant', message);
-            }, 300);
         }
 
         // Settings Management
@@ -1353,19 +1319,7 @@
             localStorage.setItem('henry_model', model);
 
             updateApiKeyStatus(true);
-            
-            // Show success and guide to chat
-            alert('✅ Settings saved! You\'re all set up!');
-            
-            // Offer to start chatting
-            setTimeout(() => {
-                if (confirm('Ready to start using Henry? Click OK to go to Chat!')) {
-                    switchView('chat');
-                    setTimeout(() => {
-                        addMessage('assistant', "Perfect! You're all set up and ready to go. I can now write code, process documents, and help with anything you need. I don't just give advice - I actually DO the work for you. What would you like me to help with first?");
-                    }, 300);
-                }
-            }, 500);
+            alert('Settings saved successfully!');
         }
 
         function saveBudgetSettings() {
@@ -1393,43 +1347,44 @@
             }
         }
 
-        // Free AI fallback - ACCURATE about what Henry CAN do
+        // Free AI fallback responses - LIMITED VERSION
         function generateFreeAIResponse(message) {
             const lowerMessage = message.toLowerCase();
             
-            // Emphasize what Henry CAN actually DO with API key
-            const apiKeyPitch = "\n\n💡 **I CAN actually do this for you!** Just add your OpenAI API key in Settings:\n\n✅ Write complete code and build full applications\n✅ Process and analyze any document\n✅ Search and organize all your Mac files\n✅ Connect to GitHub, databases, services\n✅ Execute commands and automate tasks\n\n💰 Cost: $0.005-$0.02 per chat (less than 2¢!). 100 chats = ~$1. Way cheaper than $20/month subscriptions!";
+            // Always emphasize limitations and value of API key
+            const apiKeyPitch = "\n\n💡 **Want the full Henry experience?** Add your OpenAI API key in Settings. It's super cheap (most chats cost less than 2 cents!) and unlocks everything - code writing, document processing, file organization, and way smarter responses. No monthly subscription, just pay for what you use!";
             
+            // Very basic responses to show limitations
             if (lowerMessage.includes('hello') || lowerMessage.includes('hi') || lowerMessage.includes('hey')) {
-                return "Hey! I'm Henry. Right now I'm in free mode, so I can chat but can't actually DO things. With an API key, I can write code, organize files, process documents, and handle real tasks - not just talk about them!" + apiKeyPitch;
+                return "Hey! I'm Henry, but I'm running in limited free mode right now. I can only give you basic responses and guidance. I can't write code, process documents, or do any of the cool stuff I'm designed for." + apiKeyPitch;
             }
             
-            if (lowerMessage.includes('code') || lowerMessage.includes('program') || lowerMessage.includes('app') || lowerMessage.includes('build')) {
-                return "I can absolutely write code and build applications! I just need an API key to do it. Once you add your key, I can:\n\n• Write complete, working code in any language\n• Build full applications from scratch\n• Debug and fix code issues\n• Explain code and best practices\n• Set up development environments\n\nI'm really good at coding - I just need the API key to show you!" + apiKeyPitch;
+            if (lowerMessage.includes('code') || lowerMessage.includes('program') || lowerMessage.includes('app')) {
+                return "I'd love to help you code, but I can't in free mode! Without an API key, I can only give you general advice. I can't write actual code, debug problems, or build applications. That's what I'm really good at, but I need an API key to do it." + apiKeyPitch;
             }
             
             if (lowerMessage.includes('write') || lowerMessage.includes('article') || lowerMessage.includes('book') || lowerMessage.includes('content')) {
-                return "Writing is one of my core strengths! With an API key, I can:\n\n• Write complete articles, books, and content\n• Edit and improve your writing\n• Research topics and cite sources\n• Create outlines and structure\n• Write in any style or tone\n\nI'm designed to be a professional writer - I just need the API key!" + apiKeyPitch;
+                return "Writing is one of my specialties, but not in free mode! I can't write articles, books, or any real content without an API key. I can only give you basic tips. To actually help you write, I need full access." + apiKeyPitch;
             }
             
-            if (lowerMessage.includes('file') || lowerMessage.includes('organize') || lowerMessage.includes('find') || lowerMessage.includes('search') || lowerMessage.includes('desktop') || lowerMessage.includes('documents')) {
-                return "File organization is exactly what I can help with! Once you add an API key, I can:\n\n• Search your entire Mac for any file\n• Organize files into logical folders\n• Find duplicates and clean up\n• Move, rename, and sort files\n• Create folder structures\n• Show you where everything is\n\nI have full file system access - I just need the API key to use it!" + apiKeyPitch;
+            if (lowerMessage.includes('file') || lowerMessage.includes('organize') || lowerMessage.includes('find') || lowerMessage.includes('search')) {
+                return "File organization is something I'm great at, but I can't do it in free mode! I need an API key to actually search your Mac, organize files, and help you get everything sorted. Right now I can only talk about it." + apiKeyPitch;
             }
             
-            if (lowerMessage.includes('document') || lowerMessage.includes('pdf') || lowerMessage.includes('analyze') || lowerMessage.includes('summarize')) {
-                return "Document processing is a key feature! With an API key, I can:\n\n• Read and analyze any document (PDF, Word, etc.)\n• Summarize long documents\n• Extract key information\n• Answer questions about documents\n• Process documents of any size\n\nJust upload a document and I'll handle it - once you add the API key!" + apiKeyPitch;
+            if (lowerMessage.includes('document') || lowerMessage.includes('pdf') || lowerMessage.includes('analyze')) {
+                return "Document processing is a key feature, but it doesn't work in free mode! I need an API key to read, analyze, and summarize documents. Without it, I'm pretty limited." + apiKeyPitch;
             }
             
             if (lowerMessage.includes('api') || lowerMessage.includes('key') || lowerMessage.includes('setup') || lowerMessage.includes('cost') || lowerMessage.includes('price')) {
-                return "Here's how to unlock my full capabilities:\n\n**Get Your API Key:**\n1. Go to platform.openai.com/api-keys\n2. Sign in (free account)\n3. Click 'Create new secret key'\n4. Copy it immediately (you only see it once!)\n5. Paste it in Settings\n\n**What You Get:**\n✅ Full code writing and development\n✅ Complete document processing\n✅ File system access and organization\n✅ GitHub and service integrations\n✅ Task automation and execution\n\n**Cost:** $0.005-$0.02 per chat (less than 2¢!). That's 100 chats for ~$1. Way cheaper than $20/month subscriptions! Plus you can set spending limits.";
+                return "Here's the deal: Getting an API key is easy and CHEAP!\n\n1. Go to platform.openai.com/api-keys\n2. Sign in (free account)\n3. Click 'Create new secret key'\n4. Copy it immediately (you only see it once!)\n5. Paste it in Settings\n\n**Cost:** Most conversations are $0.005-$0.02 (less than 2 cents!). That's 100 conversations for ~$1. Way cheaper than any subscription! Plus you can set spending limits so you never go over budget. The Usage & Costs tab shows you exactly what you're spending in real-time.";
             }
             
-            // Default - emphasize capabilities
-            return "I'm in free mode right now, which means I can chat but can't execute tasks. With an API key, I can write code, organize files, process documents, connect to services, and handle real work - not just talk about it. Add your API key in Settings to unlock everything!" + apiKeyPitch;
+            // Default response emphasizing limitations
+            return "I'm in limited free mode, so I can only give you basic responses. I can't write code, process documents, organize files, or do any of the advanced stuff I'm designed for. To unlock my full capabilities, you'll need to add an OpenAI API key in Settings." + apiKeyPitch;
         }
 
         // File search function
-        async function searchFiles() {
+        function searchFiles() {
             const searchTerm = document.getElementById('fileSearchInput').value;
             const resultsDiv = document.getElementById('fileResults');
             const contentDiv = document.getElementById('fileResultsContent');
@@ -1439,60 +1394,8 @@
                 return;
             }
             
-            const apiKey = localStorage.getItem('henry_api_key');
-            if (!apiKey) {
-                resultsDiv.style.display = 'block';
-                contentDiv.innerHTML = '<div class="warning-box"><span class="warning-icon">⚠️</span><div class="warning-text"><strong>API Key Required:</strong> File search requires an OpenAI API key. Add your key in Settings to unlock file search!</div></div>';
-                return;
-            }
-            
             resultsDiv.style.display = 'block';
-            contentDiv.innerHTML = '<p>🔍 Searching your Mac for files matching "' + searchTerm + '"...</p>';
-            
-            contentDiv.innerHTML = `
-                <div class="info-box">
-                    <strong>🔍 File Search Ready!</strong>
-                    <p style="margin-top: 12px;">With the desktop version of Henry, I can search your entire Mac for "${searchTerm}" and show you:</p>
-                    <ul style="margin: 12px 0 0 20px; line-height: 1.8;">
-                        <li>All files matching your search</li>
-                        <li>File locations and paths</li>
-                        <li>File sizes and dates</li>
-                        <li>Options to organize, move, or delete</li>
-                    </ul>
-                    <p style="margin-top: 12px;"><strong>Note:</strong> The web version has limited file access. For full file management, use the desktop app!</p>
-                </div>
-            `;
-        }
-        
-        // Browse folder function
-        async function browseFolder(folderName) {
-            const resultsDiv = document.getElementById('fileResults');
-            const contentDiv = document.getElementById('fileResultsContent');
-            
-            const apiKey = localStorage.getItem('henry_api_key');
-            if (!apiKey) {
-                resultsDiv.style.display = 'block';
-                contentDiv.innerHTML = '<div class="warning-box"><span class="warning-icon">⚠️</span><div class="warning-text"><strong>API Key Required:</strong> File browsing requires an OpenAI API key. Add your key in Settings to browse your ' + folderName + ' folder!</div></div>';
-                return;
-            }
-            
-            resultsDiv.style.display = 'block';
-            contentDiv.innerHTML = '<p>📂 Opening your ' + folderName + ' folder...</p>';
-            
-            contentDiv.innerHTML = `
-                <div class="info-box">
-                    <strong>📂 ${folderName} Folder Access Ready!</strong>
-                    <p style="margin-top: 12px;">With the desktop version of Henry, I can browse your ${folderName} folder and:</p>
-                    <ul style="margin: 12px 0 0 20px; line-height: 1.8;">
-                        <li>Show all files and subfolders</li>
-                        <li>Organize files by type, date, or name</li>
-                        <li>Find duplicates and clean up</li>
-                        <li>Move or rename files</li>
-                        <li>Create new folder structures</li>
-                    </ul>
-                    <p style="margin-top: 12px;"><strong>Note:</strong> The web version has limited file access. For full file management, use the desktop app!</p>
-                </div>
-            `;
+            contentDiv.innerHTML = '<p>File search requires the API server to be running with file system access. This feature will search your entire Mac for files matching "' + searchTerm + '".</p><p>To enable this, make sure the API server is running and has the necessary permissions.</p>';
         }
 
         async function testApiKey() {
@@ -1528,21 +1431,6 @@
             if (!message) return;
 
             const apiKey = localStorage.getItem('henry_api_key') || '';
-            
-            // Check if user uploaded a document recently
-            const uploadedDoc = sessionStorage.getItem('lastUploadedDocument');
-            let contextMessage = message;
-            if (uploadedDoc) {
-                const doc = JSON.parse(uploadedDoc);
-                const uploadTime = new Date(doc.uploadedAt);
-                const now = new Date();
-                const minutesAgo = Math.floor((now - uploadTime) / 60000);
-                
-                // If document was uploaded in last 30 minutes, add context
-                if (minutesAgo < 30) {
-                    contextMessage = `[Context: User recently uploaded a document named "${doc.name}" (${(doc.size / 1024).toFixed(2)} KB) ${minutesAgo} minutes ago in the Documents tab]\n\nUser message: ${message}`;
-                }
-            }
 
             // Add user message
             addMessage('user', message);
@@ -1552,10 +1440,10 @@
             // Show typing indicator
             showTypingIndicator();
 
-            // Add to conversation history (with context if available)
+            // Add to conversation history
             conversationHistory.push({
                 role: 'user',
-                content: contextMessage
+                content: message
             });
 
             try {
@@ -1581,8 +1469,7 @@
                     body: JSON.stringify({
                         messages: conversationHistory,
                         apiKey,
-                        model,
-                        maxTokens: 4000  // Allow long responses
+                        model
                     })
                 });
 
@@ -1613,14 +1500,7 @@
 
             } catch (error) {
                 hideTypingIndicator();
-                
-                // Don't give up - explain what's needed
-                const apiKey = localStorage.getItem('henry_api_key');
-                if (!apiKey) {
-                    addMessage('assistant', "I can definitely help you with that! But I need an API key to actually do it. Head over to Settings and add your OpenAI API key - it's super cheap (most tasks cost less than 2 cents!) and then I can organize your files, write code, process documents, and handle any task you need. Want me to walk you through getting the API key?");
-                } else {
-                    addMessage('assistant', "I'm having trouble connecting to the API server. Make sure the server is running (check the terminal). Once it's running, I can help you organize your files. The server needs to be started with 'npm run start:ultimate' in the apps/api folder.");
-                }
+                addMessage('assistant', 'Oops, I had trouble connecting. Could you try that again?');
             }
         }
 
@@ -1744,20 +1624,8 @@
             reader.onload = (e) => {
                 currentDocument = {
                     name: file.name,
-                    content: e.target.result,
-                    size: file.size,
-                    type: file.type
+                    content: e.target.result
                 };
-                
-                // Store in session so Henry knows about it across tabs
-                sessionStorage.setItem('lastUploadedDocument', JSON.stringify({
-                    name: file.name,
-                    size: file.size,
-                    type: file.type,
-                    uploadedAt: new Date().toISOString()
-                }));
-                
-                console.log(`Document uploaded: ${file.name} (${(file.size / 1024).toFixed(2)} KB)`);
             };
             reader.readAsText(file);
         }
@@ -1770,15 +1638,15 @@
 
             const apiKey = localStorage.getItem('henry_api_key');
             if (!apiKey) {
-                const resultDiv = document.getElementById('documentResult');
-                const contentDiv = document.getElementById('documentResultContent');
-                resultDiv.style.display = 'block';
-                contentDiv.innerHTML = '<div class="warning-box"><span class="warning-icon">⚠️</span><div class="warning-text"><strong>API Key Required:</strong> Document processing requires an OpenAI API key. Add your key in Settings to process documents!</div></div>';
+                alert('Please add your API key in Settings first!');
+                switchView('settings');
                 return;
             }
 
             const action = document.getElementById('documentAction').value;
             const customRequest = document.getElementById('customRequest').value;
+
+            const content = action === 'custom' ? customRequest : currentDocument.content;
 
             try {
                 document.getElementById('processButton').disabled = true;
@@ -1796,10 +1664,6 @@
                     })
                 });
 
-                if (!response.ok) {
-                    throw new Error('Processing failed');
-                }
-
                 const data = await response.json();
 
                 // Show result
@@ -1811,24 +1675,12 @@
                 
                 resultDiv.style.display = 'block';
 
-                // Update stats if available
-                if (data.usage && data.costs) {
-                    updateSessionStats(data.usage, data.costs);
-                    trackUsage(data.usage, data.costs);
-                }
+                // Update stats
+                updateSessionStats(data.usage, data.costs);
+                trackUsage(data.usage, data.costs);
 
             } catch (error) {
-                const resultDiv = document.getElementById('documentResult');
-                const contentDiv = document.getElementById('documentResultContent');
-                resultDiv.style.display = 'block';
-                
-                // Check what the actual problem is
-                const apiKey = localStorage.getItem('henry_api_key');
-                if (!apiKey) {
-                    contentDiv.innerHTML = '<div class="warning-box"><span class="warning-icon">⚠️</span><div class="warning-text"><strong>API Key Required:</strong> You need to add your OpenAI API key in Settings to process documents. It\'s super cheap (usually less than 2¢ per document) and unlocks all of Henry\'s capabilities!</div></div>';
-                } else {
-                    contentDiv.innerHTML = '<div class="warning-box"><span class="warning-icon">⚠️</span><div class="warning-text"><strong>Server Connection Error:</strong> Make sure the API server is running. Open Terminal and run:<br><br><code style="background: var(--bg-primary); padding: 8px; display: block; margin: 8px 0;">cd ~/Desktop/henry-ai/apps/api<br>npm run start:ultimate</code><br>Then try processing the document again.</div></div>';
-                }
+                alert('Failed to process document. Please try again.');
             } finally {
                 document.getElementById('processButton').disabled = false;
                 document.getElementById('processButton').textContent = 'Process Document';
