@@ -282,9 +282,12 @@
             font-size: 15px;
             outline: none;
             resize: none;
-            max-height: 200px;
+            height: 44px;
+            max-height: 44px;
+            min-height: 44px;
             font-family: inherit;
             line-height: 1.5;
+            overflow-y: auto;
         }
 
         .message-input::placeholder {
@@ -1253,11 +1256,6 @@
                 }
             });
 
-            input.addEventListener('input', () => {
-                input.style.height = 'auto';
-                input.style.height = input.scrollHeight + 'px';
-            });
-
             // Document action change
             document.getElementById('documentAction').addEventListener('change', (e) => {
                 const customGroup = document.getElementById('customRequestGroup');
@@ -1568,7 +1566,8 @@
                     body: JSON.stringify({
                         messages: conversationHistory,
                         apiKey,
-                        model
+                        model,
+                        maxTokens: 4000  // Allow long responses
                     })
                 });
 
@@ -1599,7 +1598,14 @@
 
             } catch (error) {
                 hideTypingIndicator();
-                addMessage('assistant', 'Oops, I had trouble connecting. Could you try that again?');
+                
+                // Don't give up - explain what's needed
+                const apiKey = localStorage.getItem('henry_api_key');
+                if (!apiKey) {
+                    addMessage('assistant', "I can definitely help you with that! But I need an API key to actually do it. Head over to Settings and add your OpenAI API key - it's super cheap (most tasks cost less than 2 cents!) and then I can organize your files, write code, process documents, and handle any task you need. Want me to walk you through getting the API key?");
+                } else {
+                    addMessage('assistant', "I'm having trouble connecting to the API server. Make sure the server is running (check the terminal). Once it's running, I can help you organize your files. The server needs to be started with 'npm run start:ultimate' in the apps/api folder.");
+                }
             }
         }
 
