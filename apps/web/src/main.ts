@@ -5,11 +5,11 @@ const $ = <T extends HTMLElement>(id:string)=>document.getElementById(id) as T;
 // Baked-in API base so you don't need console/settings
 const BAKED_API_BASE = 'http://127.0.0.1:3000';
 
-const app=$('app'), panelChat=$('panel-chat'), panelSets=$('panel-settings'), panelHelp=$('panel-help'), panelProjects=$('panel-projects');
+const app=$('app'), panelChat=$('panel-chat'), panelSets=$('panel-settings'), panelHelp=$('panel-help'), panelProjects=$('panel-projects'), panelApiKeys=$('panel-api-keys');
 const thread=$('panel-chat'); const form=$('composer') as HTMLFormElement; const input=$('input') as HTMLTextAreaElement; const sendBtn=$('send') as HTMLButtonElement;
 const pillModel=$('pill-model'), pillChars=$('pill-chars'), pillCost=$('pill-cost');
 const btnToggle=$('btn-toggle') as HTMLButtonElement, btnNew=$('btn-new') as HTMLButtonElement;
-const tabChat=$('tab-chat') as HTMLButtonElement, tabSets=$('tab-settings') as HTMLButtonElement, tabHelpBtn=$('tab-help') as HTMLButtonElement, tabProjects=$('tab-projects') as HTMLButtonElement;
+const tabChat=$('tab-chat') as HTMLButtonElement, tabSets=$('tab-settings') as HTMLButtonElement, tabHelpBtn=$('tab-help') as HTMLButtonElement, tabProjects=$('tab-projects') as HTMLButtonElement, tabApiKeys=$('tab-api-keys') as HTMLButtonElement;
 const inpApi=$('inp-api') as HTMLInputElement, inpKey=$('inp-key') as HTMLInputElement, btnSave=$('btn-save-settings') as HTMLButtonElement;
 const modeSelector=$('mode-selector') as HTMLSelectElement;
 
@@ -19,12 +19,17 @@ let currentProject: string | null = null;
 const apiBase = ()=> (localStorage.getItem('__henry_api_base__') || BAKED_API_BASE).replace(/\/+$/,'');
 const apiKey  = ()=> (localStorage.getItem('henry_api_key') || '').trim();
 
-function showPanel(which:'chat'|'settings'|'help'|'projects'){
+function showPanel(which:'chat'|'settings'|'help'|'projects'|'api-keys'){
   panelChat.classList.toggle('hidden', which!=='chat');
   panelSets.classList.toggle('hidden', which!=='settings');
   panelHelp.classList.toggle('hidden', which!=='help');
   panelProjects.classList.toggle('hidden', which!=='projects');
+  panelApiKeys.classList.toggle('hidden', which!=='api-keys');
   (document.getElementById('composer') as HTMLElement).style.display = which==='chat' ? 'flex' : 'none';
+  
+  if (which === 'api-keys') {
+    initializeApiKeyPanel();
+  }
 }
 
 function setBusy(on:boolean){ 
@@ -226,6 +231,7 @@ tabChat.addEventListener('click', ()=> showPanel('chat'));
 tabSets.addEventListener('click', ()=>{ inpApi.value=apiBase(); inpKey.value=apiKey(); showPanel('settings'); });
 tabHelpBtn.addEventListener('click', ()=> showPanel('help'));
 tabProjects.addEventListener('click', ()=> { showPanel('projects'); refreshProjectsList(); });
+tabApiKeys.addEventListener('click', ()=> showPanel('api-keys'));
 btnSave.addEventListener('click', ()=>{ localStorage.setItem('__henry_api_base__', inpApi.value.trim()); localStorage.setItem('henry_api_key', inpKey.value.trim()); showPanel('chat'); });
 btnNew.addEventListener('click', ()=>{ panelChat.innerHTML=''; addBubble('assistant','New chat started. How can I help with your writing or development project?'); showPanel('chat'); });
 
@@ -285,6 +291,127 @@ input.addEventListener('keydown', (e:KeyboardEvent)=>{
     form.requestSubmit(); 
   }
 });
+
+// API Key Management Functions
+function initializeApiKeyPanel() {
+  const keyInput = $('openai-key-input') as HTMLInputElement;
+  const statusIndicator = $('status-indicator');
+  const testResult = $('test-result');
+  
+  if (!keyInput || !statusIndicator) return;
+  
+  // Load existing key
+  const storedKey = apiKey();
+  keyInput.value = storedKey || '';
+  
+  // Update status
+  updateKeyStatus();
+  
+  // Bind events
+  const saveBtn = $('save-api-key-btn');
+  const testBtn = $('test-api-key-btn');
+  const removeBtn = $('remove-api-key-btn');
+  const toggleBtn = $('toggle-key-visibility');
+  
+  saveBtn?.addEventListener('click', saveApiKey);
+  testBtn?.addEventListener('click', testApiKey);
+  removeBtn?.addEventListener('click', removeApiKey);
+  toggleBtn?.addEventListener('click', toggleKeyVisibility);
+}
+
+function updateKeyStatus() {
+  const statusIndicator = $('status-indicator');
+  if (!statusIndicator) return;
+  
+  const hasKey = !!apiKey();
+  if (hasKey) {
+    statusIndicator.textContent = '✅ API Key Stored Locally';
+    statusIndicator.className = 'status-valid';
+  } else {
+    statusIndicator.textContent = '❌ No API Key Found';
+    statusIndicator.className = 'status-invalid';
+  }
+}
+
+function saveApiKey() {
+  const keyInput = $('openai-key-input') as HTMLInputElement;
+  if (!keyInput) return;
+  
+  const apiKey = keyInput.value.trim();
+  if (!apiKey) {
+    alert('Please enter an API key');
+    return;
+  }
+  
+  if (!apiKey.startsWith('sk-')) {
+    alert('Invalid OpenAI API key format. Keys should start with "sk-"');
+    return;
+  }
+  
+  localStorage.setItem('henry_api_key', apiKey);
+  updateKeyStatus();
+  alert('API key saved successfully!');
+}
+
+async function testApiKey() {
+  const apiKeyValue = apiKey();
+  if (!apiKeyValue) {
+    alert('Please save an API key first');
+    return;
+  }
+  
+  const testResult = $('test-result');
+  if (!testResult) return;
+  
+  testResult.style.display = 'block';
+  testResult.textContent = 'Testing API connection...';
+  testResult.className = 'test-result status-unknown';
+  
+  try {
+    const response = await fetch('https://api.openai.com/v1/models', {
+      headers: {
+        'Authorization': `Bearer ${apiKeyValue}`
+      }
+    });
+    
+    if (response.ok) {
+      testResult.textContent = '✅ API connection successful!';
+      testResult.className = 'test-result test-success';
+    } else {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+  } catch (error) {
+    testResult.textContent = `❌ API test failed: ${error.message}`;
+    testResult.className = 'test-result test-error';
+  }
+}
+
+function removeApiKey() {
+  if (confirm('Are you sure you want to remove the stored API key?')) {
+    localStorage.removeItem('henry_api_key');
+    const keyInput = $('openai-key-input') as HTMLInputElement;
+    if (keyInput) keyInput.value = '';
+    updateKeyStatus();
+    const testResult = $('test-result');
+    if (testResult) testResult.style.display = 'none';
+    alert('API key removed successfully');
+  }
+}
+
+function toggleKeyVisibility() {
+  const keyInput = $('openai-key-input') as HTMLInputElement;
+  const toggleBtn = $('toggle-key-visibility');
+  
+  if (keyInput && toggleBtn) {
+    if (keyInput.type === 'password') {
+      keyInput.type = 'text';
+      toggleBtn.textContent = '🙈';
+    } else {
+      keyInput.type = 'password';
+      toggleBtn.textContent = '👁️';
+    }
+  }
+}
 
 // Initialize
 updateProjectStatus();

@@ -34,6 +34,7 @@
         <h3>Navigation</h3>
         <button class="navbtn" id="tab-chat">💬 Chat</button>
         <button class="navbtn" id="tab-projects">📁 Projects</button>
+        <button class="navbtn" id="tab-api-keys">🔑 API Keys</button>
         <button class="navbtn" id="tab-settings">⚙️ Settings</button>
         <button class="navbtn" id="tab-help">❓ Help</button>
       </aside>
@@ -89,6 +90,41 @@
               </ul>
             </div>
           </div>
+        </div>
+
+        <div id="panel-api-keys" class="thread hidden">
+          <div class="msg assistant"><div class="bubble">
+            <h2>🔑 API Key Management</h2>
+            
+            <h3>OpenAI API Key</h3>
+            <p>Your API key is stored locally in your browser and never shared with anyone.</p>
+            
+            <div style="margin: 20px 0;">
+              <label for="openai-key-input"><strong>API Key:</strong></label><br/>
+              <div style="display: flex; gap: 10px; margin: 10px 0;">
+                <input type="password" id="openai-key-input" placeholder="sk-..." style="flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" />
+                <button id="toggle-key-visibility" style="padding: 8px 12px; border: 1px solid #ddd; background: #f9f9f9; border-radius: 4px; cursor: pointer;">👁️</button>
+              </div>
+              <p style="font-size: 0.9em; color: #666;">
+                <a href="https://platform.openai.com/api-keys" target="_blank">Get your API key from OpenAI</a>
+              </p>
+            </div>
+            
+            <div style="margin: 20px 0;">
+              <h4>Current Status</h4>
+              <div id="key-status" style="padding: 10px; border-radius: 4px; margin: 10px 0;">
+                <span id="status-indicator" class="status-unknown">Checking...</span>
+              </div>
+            </div>
+            
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+              <button id="save-api-key-btn" class="btn" style="background-color: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer;">Save Key</button>
+              <button id="test-api-key-btn" class="btn" style="background-color: #6c757d; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer;">Test Connection</button>
+              <button id="remove-api-key-btn" class="btn" style="background-color: #dc3545; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer;">Remove Key</button>
+            </div>
+            
+            <div id="test-result" style="display: none; margin-top: 15px; padding: 10px; border-radius: 4px;"></div>
+          </div></div>
         </div>
 
         <div id="panel-settings" class="thread hidden">
