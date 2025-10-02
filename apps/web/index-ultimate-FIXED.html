@@ -737,19 +737,19 @@
                         </p>
 
                         <div class="capabilities-grid">
-                            <div class="capability-card" onclick="switchView('chat')">
+                            <div class="capability-card" onclick="startMode('writing')">
                                 <div class="capability-icon">✍️</div>
                                 <h3 class="capability-title">Writing & Content</h3>
                                 <p class="capability-description">
-                                    Create novels, articles, ebooks, scripts - anything written. I'll help with structure, editing, and research.
+                                    I'll write complete articles, books, scripts - anything you need. Not just advice, actual content.
                                 </p>
                             </div>
 
-                            <div class="capability-card" onclick="switchView('chat')">
+                            <div class="capability-card" onclick="startMode('coding')">
                                 <div class="capability-icon">💻</div>
                                 <h3 class="capability-title">Development & Coding</h3>
                                 <p class="capability-description">
-                                    Build web apps, mobile apps, APIs, or any software. Full-stack development from concept to deployment.
+                                    I'll write complete, working code for you. Web apps, mobile apps, APIs - I build it all.
                                 </p>
                             </div>
 
@@ -757,37 +757,37 @@
                                 <div class="capability-icon">📚</div>
                                 <h3 class="capability-title">Document Processing</h3>
                                 <p class="capability-description">
-                                    Process, analyze, and summarize documents of any size. PDFs, Word docs, spreadsheets - I handle it all.
+                                    I'll read, analyze, and summarize any document. Upload it and I'll process it for you.
                                 </p>
                             </div>
 
-                            <div class="capability-card" onclick="switchView('chat')">
+                            <div class="capability-card" onclick="startMode('integration')">
                                 <div class="capability-icon">🔗</div>
                                 <h3 class="capability-title">Connect to Anything</h3>
                                 <p class="capability-description">
-                                    Connect Henry to your accounts and services - he'll help you set everything up step by step.
+                                    I'll connect to GitHub, databases, APIs, cloud services - I set it up and use it for you.
                                 </p>
                             </div>
 
-                            <div class="capability-card" onclick="switchView('chat')">
+                            <div class="capability-card" onclick="startMode('automation')">
                                 <div class="capability-icon">🤖</div>
                                 <h3 class="capability-title">Automation</h3>
                                 <p class="capability-description">
-                                    Automate repetitive tasks, create workflows, and save time on manual processes.
+                                    I'll write scripts and automation for you. Tell me what's repetitive and I'll automate it.
                                 </p>
                             </div>
 
-                            <div class="capability-card" onclick="switchView('chat')">
+                            <div class="capability-card" onclick="startMode('problem-solving')">
                                 <div class="capability-icon">🎯</div>
                                 <h3 class="capability-title">Problem Solving</h3>
                                 <p class="capability-description">
-                                    Research, analyze, strategize - whatever challenge you're facing, let's solve it together.
+                                    I'll research, analyze, and create actual solutions. Not just ideas - real answers.
                                 </p>
                             </div>
                         </div>
 
                         <div style="margin-top: 48px;">
-                            <button class="button button-primary" onclick="switchView('setup')" style="font-size: 16px; padding: 16px 32px;">
+                            <button class="button button-primary" onclick="startSetupFlow()" style="font-size: 16px; padding: 16px 32px;">
                                 Get Started →
                             </button>
                         </div>
@@ -1287,6 +1287,41 @@
                 loadUsageStats();
             }
         }
+        
+        // Setup flow with completion
+        function startSetupFlow() {
+            switchView('setup');
+            
+            // Check if already set up
+            const apiKey = localStorage.getItem('henry_api_key');
+            if (apiKey) {
+                // Already set up - go straight to chat
+                setTimeout(() => {
+                    switchView('chat');
+                    addMessage('assistant', "Welcome back! You're all set up and ready to go. I can write code, process documents, organize files, and help with anything you need. What would you like to work on today?");
+                }, 500);
+            }
+        }
+        
+        // Start mode with context
+        function startMode(mode) {
+            switchView('chat');
+            
+            const modeMessages = {
+                'writing': "Hey! I'm ready to help you write. I don't just give advice - I actually write complete content for you. Whether it's an article, book, script, or any other writing project, I'll create it. What would you like me to write?",
+                'coding': "Hey! I'm ready to code with you. I don't just explain concepts - I write complete, working code. Tell me what you want to build and I'll write the actual code for you. What are we building today?",
+                'integration': "Hey! I'm ready to connect services for you. I don't just explain how - I actually set up and use the connections. Want to connect GitHub? A database? An API? Tell me what you need and I'll make it happen.",
+                'automation': "Hey! I'm ready to automate tasks for you. I don't just suggest ideas - I write actual working scripts and automation. What repetitive task would you like me to automate?",
+                'problem-solving': "Hey! I'm ready to solve problems with you. I don't just brainstorm - I research, analyze, and create actual solutions. What challenge are you facing?"
+            };
+            
+            const message = modeMessages[mode] || "Hey! What can I help you with today?";
+            
+            // Add Henry's mode message
+            setTimeout(() => {
+                addMessage('assistant', message);
+            }, 300);
+        }
 
         // Settings Management
         function loadSettings() {
@@ -1320,7 +1355,19 @@
             localStorage.setItem('henry_model', model);
 
             updateApiKeyStatus(true);
-            alert('Settings saved successfully!');
+            
+            // Show success and guide to chat
+            alert('✅ Settings saved! You\'re all set up!');
+            
+            // Offer to start chatting
+            setTimeout(() => {
+                if (confirm('Ready to start using Henry? Click OK to go to Chat!')) {
+                    switchView('chat');
+                    setTimeout(() => {
+                        addMessage('assistant', "Perfect! You're all set up and ready to go. I can now write code, process documents, and help with anything you need. I don't just give advice - I actually DO the work for you. What would you like me to help with first?");
+                    }, 300);
+                }
+            }, 500);
         }
 
         function saveBudgetSettings() {
@@ -1690,15 +1737,15 @@
 
             const apiKey = localStorage.getItem('henry_api_key');
             if (!apiKey) {
-                alert('Please add your API key in Settings first!');
-                switchView('settings');
+                const resultDiv = document.getElementById('documentResult');
+                const contentDiv = document.getElementById('documentResultContent');
+                resultDiv.style.display = 'block';
+                contentDiv.innerHTML = '<div class="warning-box"><span class="warning-icon">⚠️</span><div class="warning-text"><strong>API Key Required:</strong> Document processing requires an OpenAI API key. Add your key in Settings to process documents!</div></div>';
                 return;
             }
 
             const action = document.getElementById('documentAction').value;
             const customRequest = document.getElementById('customRequest').value;
-
-            const content = action === 'custom' ? customRequest : currentDocument.content;
 
             try {
                 document.getElementById('processButton').disabled = true;
@@ -1716,6 +1763,10 @@
                     })
                 });
 
+                if (!response.ok) {
+                    throw new Error('Processing failed');
+                }
+
                 const data = await response.json();
 
                 // Show result
@@ -1727,12 +1778,17 @@
                 
                 resultDiv.style.display = 'block';
 
-                // Update stats
-                updateSessionStats(data.usage, data.costs);
-                trackUsage(data.usage, data.costs);
+                // Update stats if available
+                if (data.usage && data.costs) {
+                    updateSessionStats(data.usage, data.costs);
+                    trackUsage(data.usage, data.costs);
+                }
 
             } catch (error) {
-                alert('Failed to process document. Please try again.');
+                const resultDiv = document.getElementById('documentResult');
+                const contentDiv = document.getElementById('documentResultContent');
+                resultDiv.style.display = 'block';
+                contentDiv.innerHTML = '<div class="warning-box"><span class="warning-icon">⚠️</span><div class="warning-text"><strong>Processing Error:</strong> ' + error.message + '. Make sure the API server is running and your API key is valid.</div></div>';
             } finally {
                 document.getElementById('processButton').disabled = false;
                 document.getElementById('processButton').textContent = 'Process Document';
