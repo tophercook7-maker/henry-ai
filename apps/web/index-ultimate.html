@@ -1,0 +1,1508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Henry AI - Your Universal Assistant</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0a0e27;
+            --bg-secondary: #151932;
+            --bg-tertiary: #1e2139;
+            --accent-primary: #6366f1;
+            --accent-secondary: #8b5cf6;
+            --text-primary: #e2e8f0;
+            --text-secondary: #94a3b8;
+            --border-color: #2d3250;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow: hidden;
+        }
+
+        .app-container {
+            display: flex;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 280px;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar-header {
+            padding: 24px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 24px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+        .nav-menu {
+            flex: 1;
+            padding: 16px;
+            overflow-y: auto;
+        }
+
+        .nav-item {
+            padding: 12px 16px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: var(--text-secondary);
+        }
+
+        .nav-item:hover {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        .nav-item.active {
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            color: white;
+        }
+
+        .nav-icon {
+            font-size: 20px;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .content-header {
+            padding: 24px 32px;
+            border-bottom: 1px solid var(--border-color);
+            background: var(--bg-secondary);
+        }
+
+        .content-title {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .content-subtitle {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .content-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 32px;
+        }
+
+        /* Chat Interface */
+        .chat-container {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            max-width: 900px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .messages-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .message {
+            display: flex;
+            gap: 16px;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+
+        .user-avatar {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+        }
+
+        .assistant-avatar {
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+        }
+
+        .message-content {
+            flex: 1;
+            background: var(--bg-secondary);
+            padding: 16px 20px;
+            border-radius: 12px;
+            line-height: 1.8;
+        }
+
+        .message-content p {
+            margin-bottom: 16px;
+        }
+
+        .message-content p:last-child {
+            margin-bottom: 0;
+        }
+
+        .message.user .message-content {
+            background: var(--bg-tertiary);
+        }
+
+        .typing-indicator {
+            display: flex;
+            gap: 6px;
+            padding: 16px 20px;
+        }
+
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--accent-primary);
+            animation: typing 1.4s infinite;
+        }
+
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typing {
+            0%, 60%, 100% {
+                transform: translateY(0);
+                opacity: 0.7;
+            }
+            30% {
+                transform: translateY(-10px);
+                opacity: 1;
+            }
+        }
+
+        /* Input Area */
+        .input-container {
+            padding: 24px 0 0 0;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .input-wrapper {
+            display: flex;
+            gap: 12px;
+            background: var(--bg-secondary);
+            padding: 12px;
+            border-radius: 12px;
+            border: 2px solid var(--border-color);
+            transition: border-color 0.2s ease;
+        }
+
+        .input-wrapper:focus-within {
+            border-color: var(--accent-primary);
+        }
+
+        .message-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--text-primary);
+            font-size: 15px;
+            outline: none;
+            resize: none;
+            max-height: 200px;
+            font-family: inherit;
+            line-height: 1.5;
+        }
+
+        .message-input::placeholder {
+            color: var(--text-secondary);
+        }
+
+        .send-button {
+            width: 44px;
+            height: 44px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            border: none;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            transition: transform 0.2s ease, opacity 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .send-button:hover:not(:disabled) {
+            transform: scale(1.05);
+        }
+
+        .send-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Setup Wizard */
+        .wizard-container {
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        .wizard-card {
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 24px;
+            border: 1px solid var(--border-color);
+        }
+
+        .wizard-step {
+            display: flex;
+            align-items: flex-start;
+            gap: 20px;
+            margin-bottom: 32px;
+        }
+
+        .step-number {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        .step-content {
+            flex: 1;
+        }
+
+        .step-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        .step-description {
+            color: var(--text-secondary);
+            line-height: 1.8;
+            margin-bottom: 16px;
+        }
+
+        .warning-box {
+            background: rgba(245, 158, 11, 0.1);
+            border: 1px solid var(--warning);
+            border-radius: 8px;
+            padding: 16px;
+            margin: 16px 0;
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+        }
+
+        .warning-icon {
+            color: var(--warning);
+            font-size: 24px;
+        }
+
+        .warning-text {
+            flex: 1;
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        .info-box {
+            background: rgba(99, 102, 241, 0.1);
+            border: 1px solid var(--accent-primary);
+            border-radius: 8px;
+            padding: 16px;
+            margin: 16px 0;
+        }
+
+        /* Settings */
+        .settings-section {
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+            border: 1px solid var(--border-color);
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px 16px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 14px;
+            transition: border-color 0.2s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+        }
+
+        .form-select {
+            width: 100%;
+            padding: 12px 16px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .button {
+            padding: 12px 24px;
+            border-radius: 8px;
+            border: none;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .button-primary {
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            color: white;
+        }
+
+        .button-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+        }
+
+        .button-secondary {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .button-secondary:hover {
+            background: var(--bg-secondary);
+        }
+
+        /* Stats Dashboard */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 32px;
+        }
+
+        .stat-card {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid var(--border-color);
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 13px;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stat-change {
+            font-size: 12px;
+            margin-top: 4px;
+        }
+
+        .stat-change.positive {
+            color: var(--success);
+        }
+
+        /* Status Indicators */
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .status-indicator.success {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+        }
+
+        .status-indicator.warning {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--warning);
+        }
+
+        .status-indicator.error {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--error);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: currentColor;
+        }
+
+        /* Welcome Screen */
+        .welcome-container {
+            max-width: 800px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        .welcome-title {
+            font-size: 48px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .welcome-subtitle {
+            font-size: 20px;
+            color: var(--text-secondary);
+            margin-bottom: 48px;
+            line-height: 1.6;
+        }
+
+        .capabilities-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 24px;
+            margin-top: 48px;
+        }
+
+        .capability-card {
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            padding: 24px;
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .capability-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--accent-primary);
+            box-shadow: 0 8px 24px rgba(99, 102, 241, 0.2);
+        }
+
+        .capability-icon {
+            font-size: 40px;
+            margin-bottom: 16px;
+        }
+
+        .capability-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .capability-description {
+            color: var(--text-secondary);
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-primary);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--accent-primary);
+        }
+
+        /* Hidden class */
+        .hidden {
+            display: none !important;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                position: fixed;
+                left: 0;
+                top: 0;
+                height: 100vh;
+                z-index: 1000;
+                transform: translateX(-100%);
+            }
+
+            .sidebar.open {
+                transform: translateX(0);
+            }
+
+            .content-body {
+                padding: 16px;
+            }
+
+            .welcome-title {
+                font-size: 32px;
+            }
+
+            .capabilities-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+<script src="https://sites.super.myninja.ai/_assets/ninja-daytona-script.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <div class="logo-icon">H</div>
+                    <span>Henry AI</span>
+                </div>
+            </div>
+            <nav class="nav-menu">
+                <div class="nav-item active" data-view="welcome">
+                    <span class="nav-icon">🏠</span>
+                    <span>Welcome</span>
+                </div>
+                <div class="nav-item" data-view="chat">
+                    <span class="nav-icon">💬</span>
+                    <span>Chat</span>
+                </div>
+                <div class="nav-item" data-view="setup">
+                    <span class="nav-icon">🚀</span>
+                    <span>Setup Wizard</span>
+                </div>
+                <div class="nav-item" data-view="settings">
+                    <span class="nav-icon">⚙️</span>
+                    <span>Settings</span>
+                </div>
+                <div class="nav-item" data-view="usage">
+                    <span class="nav-icon">📊</span>
+                    <span>Usage & Costs</span>
+                </div>
+                <div class="nav-item" data-view="documents">
+                    <span class="nav-icon">📄</span>
+                    <span>Documents</span>
+                </div>
+            </nav>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Welcome View -->
+            <div id="welcome-view" class="content-view">
+                <div class="content-header">
+                    <h1 class="content-title">Welcome to Henry AI</h1>
+                    <p class="content-subtitle">Your universal assistant for absolutely anything</p>
+                </div>
+                <div class="content-body">
+                    <div class="welcome-container">
+                        <h2 class="welcome-title">Hey there! I'm Henry 👋</h2>
+                        <p class="welcome-subtitle">
+                            I'm here to help you with anything you need. Whether you're writing a novel, building an app, 
+                            processing documents, automating tasks, or just need someone to brainstorm with - I've got you covered. 
+                            Think of me as your knowledgeable colleague who's always ready to help.
+                        </p>
+
+                        <div class="capabilities-grid">
+                            <div class="capability-card" onclick="switchView('chat')">
+                                <div class="capability-icon">✍️</div>
+                                <h3 class="capability-title">Writing & Content</h3>
+                                <p class="capability-description">
+                                    Create novels, articles, ebooks, scripts - anything written. I'll help with structure, editing, and research.
+                                </p>
+                            </div>
+
+                            <div class="capability-card" onclick="switchView('chat')">
+                                <div class="capability-icon">💻</div>
+                                <h3 class="capability-title">Development & Coding</h3>
+                                <p class="capability-description">
+                                    Build web apps, mobile apps, APIs, or any software. Full-stack development from concept to deployment.
+                                </p>
+                            </div>
+
+                            <div class="capability-card" onclick="switchView('documents')">
+                                <div class="capability-icon">📚</div>
+                                <h3 class="capability-title">Document Processing</h3>
+                                <p class="capability-description">
+                                    Process, analyze, and summarize documents of any size. PDFs, Word docs, spreadsheets - I handle it all.
+                                </p>
+                            </div>
+
+                            <div class="capability-card" onclick="switchView('chat')">
+                                <div class="capability-icon">🔗</div>
+                                <h3 class="capability-title">Integrations</h3>
+                                <p class="capability-description">
+                                    Connect to GitHub, databases, APIs, cloud services - integrate with anything you need.
+                                </p>
+                            </div>
+
+                            <div class="capability-card" onclick="switchView('chat')">
+                                <div class="capability-icon">🤖</div>
+                                <h3 class="capability-title">Automation</h3>
+                                <p class="capability-description">
+                                    Automate repetitive tasks, create workflows, and save time on manual processes.
+                                </p>
+                            </div>
+
+                            <div class="capability-card" onclick="switchView('chat')">
+                                <div class="capability-icon">🎯</div>
+                                <h3 class="capability-title">Problem Solving</h3>
+                                <p class="capability-description">
+                                    Research, analyze, strategize - whatever challenge you're facing, let's solve it together.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div style="margin-top: 48px;">
+                            <button class="button button-primary" onclick="switchView('setup')" style="font-size: 16px; padding: 16px 32px;">
+                                Get Started →
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chat View -->
+            <div id="chat-view" class="content-view hidden">
+                <div class="content-header">
+                    <h1 class="content-title">Chat with Henry</h1>
+                    <p class="content-subtitle">Ask me anything - I'm here to help</p>
+                </div>
+                <div class="content-body">
+                    <div class="chat-container">
+                        <div class="messages-container" id="messages">
+                            <!-- Messages will be added here -->
+                        </div>
+                        <div class="input-container">
+                            <div class="input-wrapper">
+                                <textarea 
+                                    class="message-input" 
+                                    id="messageInput" 
+                                    placeholder="What can I help you with today?"
+                                    rows="1"
+                                ></textarea>
+                                <button class="send-button" id="sendButton" onclick="sendMessage()">
+                                    ➤
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Setup Wizard View -->
+            <div id="setup-view" class="content-view hidden">
+                <div class="content-header">
+                    <h1 class="content-title">Setup Wizard</h1>
+                    <p class="content-subtitle">Let's get you set up in just a few minutes</p>
+                </div>
+                <div class="content-body">
+                    <div class="wizard-container">
+                        <div class="wizard-card">
+                            <div class="wizard-step">
+                                <div class="step-number">1</div>
+                                <div class="step-content">
+                                    <h3 class="step-title">Get Your OpenAI API Key</h3>
+                                    <p class="step-description">
+                                        To use Henry AI, you'll need an API key from OpenAI. Don't worry - it's quick and easy to get one, 
+                                        and you only pay for what you use (usually just a few cents per conversation).
+                                    </p>
+                                    <div class="warning-box">
+                                        <span class="warning-icon">⚠️</span>
+                                        <div class="warning-text">
+                                            <strong>Important:</strong> You'll only see your API key ONCE when it's created. 
+                                            Make sure to copy it immediately and save it somewhere secure. If you lose it, 
+                                            you'll need to create a new one.
+                                        </div>
+                                    </div>
+                                    <p class="step-description">
+                                        Here's how to get your key:
+                                    </p>
+                                    <ol style="color: var(--text-secondary); line-height: 2; margin-left: 20px;">
+                                        <li>Go to <a href="https://platform.openai.com/api-keys" target="_blank" style="color: var(--accent-primary);">platform.openai.com/api-keys</a></li>
+                                        <li>Sign in or create an account (it's free)</li>
+                                        <li>Click "Create new secret key"</li>
+                                        <li>Give it a name like "Henry AI"</li>
+                                        <li><strong>Copy the key immediately</strong> - you won't see it again!</li>
+                                        <li>Save it somewhere secure (password manager, secure note, etc.)</li>
+                                    </ol>
+                                </div>
+                            </div>
+
+                            <div class="wizard-step">
+                                <div class="step-number">2</div>
+                                <div class="step-content">
+                                    <h3 class="step-title">Add Your API Key to Henry</h3>
+                                    <p class="step-description">
+                                        Once you have your API key, head over to the Settings tab and paste it in. 
+                                        Henry will store it securely on your device - it never leaves your computer.
+                                    </p>
+                                    <button class="button button-primary" onclick="switchView('settings')">
+                                        Go to Settings →
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="wizard-step">
+                                <div class="step-number">3</div>
+                                <div class="step-content">
+                                    <h3 class="step-title">Start Chatting!</h3>
+                                    <p class="step-description">
+                                        That's it! Once your API key is set up, you can start chatting with Henry. 
+                                        Ask me anything - I'm here to help with writing, coding, research, problem-solving, 
+                                        and pretty much anything else you can think of.
+                                    </p>
+                                    <div class="info-box">
+                                        <strong>💡 Pro Tip:</strong> Check out the Usage & Costs tab to monitor your spending. 
+                                        You can set budget limits to make sure you never spend more than you're comfortable with.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings View -->
+            <div id="settings-view" class="content-view hidden">
+                <div class="content-header">
+                    <h1 class="content-title">Settings</h1>
+                    <p class="content-subtitle">Configure Henry to work exactly how you want</p>
+                </div>
+                <div class="content-body">
+                    <div style="max-width: 700px; margin: 0 auto;">
+                        <div class="settings-section">
+                            <h3 class="section-title">
+                                <span>🔑</span>
+                                OpenAI API Configuration
+                            </h3>
+                            <div class="form-group">
+                                <label class="form-label">API Key</label>
+                                <input 
+                                    type="password" 
+                                    class="form-input" 
+                                    id="apiKeyInput" 
+                                    placeholder="sk-..."
+                                >
+                                <div style="margin-top: 8px;">
+                                    <span class="status-indicator" id="apiKeyStatus">
+                                        <span class="status-dot"></span>
+                                        <span id="apiKeyStatusText">No API key configured</span>
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Model</label>
+                                <select class="form-select" id="modelSelect">
+                                    <option value="gpt-4o">GPT-4o (Recommended - Fast & Smart)</option>
+                                    <option value="gpt-4o-mini">GPT-4o Mini (Faster & Cheaper)</option>
+                                    <option value="gpt-4-turbo">GPT-4 Turbo (Most Capable)</option>
+                                    <option value="gpt-4">GPT-4 (Classic)</option>
+                                </select>
+                            </div>
+                            <button class="button button-primary" onclick="saveSettings()">
+                                Save Settings
+                            </button>
+                            <button class="button button-secondary" onclick="testApiKey()" style="margin-left: 12px;">
+                                Test Connection
+                            </button>
+                        </div>
+
+                        <div class="settings-section">
+                            <h3 class="section-title">
+                                <span>💰</span>
+                                Budget & Limits
+                            </h3>
+                            <div class="form-group">
+                                <label class="form-label">Daily Spending Limit ($)</label>
+                                <input 
+                                    type="number" 
+                                    class="form-input" 
+                                    id="dailyLimitInput" 
+                                    placeholder="5.00"
+                                    step="0.01"
+                                    min="0"
+                                >
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Monthly Spending Limit ($)</label>
+                                <input 
+                                    type="number" 
+                                    class="form-input" 
+                                    id="monthlyLimitInput" 
+                                    placeholder="50.00"
+                                    step="0.01"
+                                    min="0"
+                                >
+                            </div>
+                            <div class="form-group">
+                                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                    <input type="checkbox" id="alertsCheckbox" checked>
+                                    <span class="form-label" style="margin: 0;">Send alerts when approaching limits</span>
+                                </label>
+                            </div>
+                            <button class="button button-primary" onclick="saveBudgetSettings()">
+                                Save Budget Settings
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Usage View -->
+            <div id="usage-view" class="content-view hidden">
+                <div class="content-header">
+                    <h1 class="content-title">Usage & Costs</h1>
+                    <p class="content-subtitle">Track your spending and usage</p>
+                </div>
+                <div class="content-body">
+                    <div style="max-width: 1000px; margin: 0 auto;">
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <div class="stat-label">Total Spent</div>
+                                <div class="stat-value" id="totalCost">$0.00</div>
+                                <div class="stat-change">All time</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-label">Total Tokens</div>
+                                <div class="stat-value" id="totalTokens">0</div>
+                                <div class="stat-change">All conversations</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-label">Conversations</div>
+                                <div class="stat-value" id="sessionCount">0</div>
+                                <div class="stat-change">Total sessions</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-label">Avg Cost/Session</div>
+                                <div class="stat-value" id="avgCost">$0.00</div>
+                                <div class="stat-change">Per conversation</div>
+                            </div>
+                        </div>
+
+                        <div class="settings-section">
+                            <h3 class="section-title">
+                                <span>📈</span>
+                                Current Session
+                            </h3>
+                            <div class="stats-grid">
+                                <div class="stat-card">
+                                    <div class="stat-label">Session Cost</div>
+                                    <div class="stat-value" id="sessionCost">$0.00</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-label">Session Tokens</div>
+                                    <div class="stat-value" id="sessionTokens">0</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-label">Messages</div>
+                                    <div class="stat-value" id="messageCount">0</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="settings-section">
+                            <h3 class="section-title">
+                                <span>💡</span>
+                                Cost Information
+                            </h3>
+                            <p style="color: var(--text-secondary); line-height: 1.8; margin-bottom: 16px;">
+                                Henry AI uses OpenAI's API, which charges based on the number of tokens (words) processed. 
+                                Here's what you can expect:
+                            </p>
+                            <ul style="color: var(--text-secondary); line-height: 2; margin-left: 20px;">
+                                <li><strong>GPT-4o:</strong> ~$0.005 per conversation (recommended)</li>
+                                <li><strong>GPT-4o Mini:</strong> ~$0.001 per conversation (budget-friendly)</li>
+                                <li><strong>GPT-4 Turbo:</strong> ~$0.02 per conversation (most capable)</li>
+                            </ul>
+                            <p style="color: var(--text-secondary); line-height: 1.8; margin-top: 16px;">
+                                Most users spend less than $5/month for regular use. You can set spending limits in Settings 
+                                to ensure you never exceed your budget.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Documents View -->
+            <div id="documents-view" class="content-view hidden">
+                <div class="content-header">
+                    <h1 class="content-title">Document Processing</h1>
+                    <p class="content-subtitle">Process, analyze, and summarize documents of any size</p>
+                </div>
+                <div class="content-body">
+                    <div style="max-width: 800px; margin: 0 auto;">
+                        <div class="settings-section">
+                            <h3 class="section-title">
+                                <span>📄</span>
+                                Upload Document
+                            </h3>
+                            <div class="form-group">
+                                <input 
+                                    type="file" 
+                                    id="documentInput" 
+                                    accept=".pdf,.txt,.doc,.docx,.csv,.json,.xml"
+                                    style="display: none;"
+                                    onchange="handleDocumentUpload(event)"
+                                >
+                                <button class="button button-primary" onclick="document.getElementById('documentInput').click()">
+                                    Choose File
+                                </button>
+                                <span id="fileName" style="margin-left: 16px; color: var(--text-secondary);"></span>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">What would you like to do?</label>
+                                <select class="form-select" id="documentAction">
+                                    <option value="summarize">Summarize the document</option>
+                                    <option value="analyze">Analyze key themes and insights</option>
+                                    <option value="extract">Extract important information</option>
+                                    <option value="custom">Custom request</option>
+                                </select>
+                            </div>
+                            <div class="form-group" id="customRequestGroup" style="display: none;">
+                                <label class="form-label">Custom Request</label>
+                                <textarea 
+                                    class="form-input" 
+                                    id="customRequest" 
+                                    rows="3"
+                                    placeholder="What would you like me to do with this document?"
+                                ></textarea>
+                            </div>
+                            <button class="button button-primary" onclick="processDocument()" id="processButton" disabled>
+                                Process Document
+                            </button>
+                        </div>
+
+                        <div class="settings-section" id="documentResult" style="display: none;">
+                            <h3 class="section-title">
+                                <span>✨</span>
+                                Result
+                            </h3>
+                            <div id="documentResultContent" style="color: var(--text-secondary); line-height: 1.8;">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        const API_URL = 'http://localhost:3000';
+        let currentView = 'welcome';
+        let conversationHistory = [];
+        let sessionStats = {
+            cost: 0,
+            tokens: 0,
+            messages: 0
+        };
+        let currentDocument = null;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadSettings();
+            loadUsageStats();
+            setupEventListeners();
+        });
+
+        function setupEventListeners() {
+            // Navigation
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    const view = item.dataset.view;
+                    switchView(view);
+                });
+            });
+
+            // Message input
+            const input = document.getElementById('messageInput');
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+
+            input.addEventListener('input', () => {
+                input.style.height = 'auto';
+                input.style.height = input.scrollHeight + 'px';
+            });
+
+            // Document action change
+            document.getElementById('documentAction').addEventListener('change', (e) => {
+                const customGroup = document.getElementById('customRequestGroup');
+                customGroup.style.display = e.target.value === 'custom' ? 'block' : 'none';
+            });
+        }
+
+        function switchView(view) {
+            // Update navigation
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+                if (item.dataset.view === view) {
+                    item.classList.add('active');
+                }
+            });
+
+            // Update content
+            document.querySelectorAll('.content-view').forEach(v => {
+                v.classList.add('hidden');
+            });
+            document.getElementById(`${view}-view`).classList.remove('hidden');
+
+            currentView = view;
+
+            // Load data for specific views
+            if (view === 'usage') {
+                loadUsageStats();
+            }
+        }
+
+        // Settings Management
+        function loadSettings() {
+            const apiKey = localStorage.getItem('henry_api_key');
+            const model = localStorage.getItem('henry_model') || 'gpt-4o';
+            const dailyLimit = localStorage.getItem('henry_daily_limit');
+            const monthlyLimit = localStorage.getItem('henry_monthly_limit');
+            const alerts = localStorage.getItem('henry_alerts') !== 'false';
+
+            if (apiKey) {
+                document.getElementById('apiKeyInput').value = apiKey;
+                updateApiKeyStatus(true);
+            }
+
+            document.getElementById('modelSelect').value = model;
+            if (dailyLimit) document.getElementById('dailyLimitInput').value = dailyLimit;
+            if (monthlyLimit) document.getElementById('monthlyLimitInput').value = monthlyLimit;
+            document.getElementById('alertsCheckbox').checked = alerts;
+        }
+
+        function saveSettings() {
+            const apiKey = document.getElementById('apiKeyInput').value.trim();
+            const model = document.getElementById('modelSelect').value;
+
+            if (!apiKey) {
+                alert('Please enter your API key');
+                return;
+            }
+
+            localStorage.setItem('henry_api_key', apiKey);
+            localStorage.setItem('henry_model', model);
+
+            updateApiKeyStatus(true);
+            alert('Settings saved successfully!');
+        }
+
+        function saveBudgetSettings() {
+            const dailyLimit = document.getElementById('dailyLimitInput').value;
+            const monthlyLimit = document.getElementById('monthlyLimitInput').value;
+            const alerts = document.getElementById('alertsCheckbox').checked;
+
+            if (dailyLimit) localStorage.setItem('henry_daily_limit', dailyLimit);
+            if (monthlyLimit) localStorage.setItem('henry_monthly_limit', monthlyLimit);
+            localStorage.setItem('henry_alerts', alerts);
+
+            alert('Budget settings saved!');
+        }
+
+        function updateApiKeyStatus(hasKey) {
+            const status = document.getElementById('apiKeyStatus');
+            const text = document.getElementById('apiKeyStatusText');
+
+            if (hasKey) {
+                status.className = 'status-indicator success';
+                text.textContent = 'API key configured';
+            } else {
+                status.className = 'status-indicator error';
+                text.textContent = 'No API key configured';
+            }
+        }
+
+        async function testApiKey() {
+            const apiKey = document.getElementById('apiKeyInput').value.trim();
+            
+            if (!apiKey) {
+                alert('Please enter your API key first');
+                return;
+            }
+
+            try {
+                const response = await fetch('https://api.openai.com/v1/models', {
+                    headers: {
+                        'Authorization': `Bearer ${apiKey}`
+                    }
+                });
+
+                if (response.ok) {
+                    alert('✅ API key is valid! You\'re all set to use Henry.');
+                } else {
+                    alert('❌ API key is invalid. Please check and try again.');
+                }
+            } catch (error) {
+                alert('❌ Could not verify API key. Please check your connection.');
+            }
+        }
+
+        // Chat Functions
+        async function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+
+            if (!message) return;
+
+            const apiKey = localStorage.getItem('henry_api_key');
+            if (!apiKey) {
+                alert('Please add your API key in Settings first!');
+                switchView('settings');
+                return;
+            }
+
+            // Add user message
+            addMessage('user', message);
+            input.value = '';
+            input.style.height = 'auto';
+
+            // Show typing indicator
+            showTypingIndicator();
+
+            // Add to conversation history
+            conversationHistory.push({
+                role: 'user',
+                content: message
+            });
+
+            try {
+                const model = localStorage.getItem('henry_model') || 'gpt-4o';
+                const response = await fetch(`${API_URL}/chat`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        messages: conversationHistory,
+                        apiKey,
+                        model
+                    })
+                });
+
+                hideTypingIndicator();
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    addMessage('assistant', error.error || 'Sorry, something went wrong. Please try again.');
+                    return;
+                }
+
+                const data = await response.json();
+
+                // Add assistant message
+                addMessage('assistant', data.message);
+
+                // Update conversation history
+                conversationHistory.push({
+                    role: 'assistant',
+                    content: data.message
+                });
+
+                // Update stats
+                updateSessionStats(data.usage, data.costs);
+
+                // Track usage
+                trackUsage(data.usage, data.costs);
+
+            } catch (error) {
+                hideTypingIndicator();
+                addMessage('assistant', 'Oops, I had trouble connecting. Could you try that again?');
+            }
+        }
+
+        function addMessage(role, content) {
+            const messagesContainer = document.getElementById('messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${role}`;
+
+            const avatar = document.createElement('div');
+            avatar.className = `message-avatar ${role}-avatar`;
+            avatar.textContent = role === 'user' ? '👤' : '🤖';
+
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content';
+            
+            // Convert markdown-style paragraphs to HTML
+            const paragraphs = content.split('\n\n').filter(p => p.trim());
+            contentDiv.innerHTML = paragraphs.map(p => `<p>${p}</p>`).join('');
+
+            messageDiv.appendChild(avatar);
+            messageDiv.appendChild(contentDiv);
+            messagesContainer.appendChild(messageDiv);
+
+            // Scroll to bottom
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function showTypingIndicator() {
+            const messagesContainer = document.getElementById('messages');
+            const indicator = document.createElement('div');
+            indicator.className = 'message assistant';
+            indicator.id = 'typing-indicator';
+
+            const avatar = document.createElement('div');
+            avatar.className = 'message-avatar assistant-avatar';
+            avatar.textContent = '🤖';
+
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'message-content';
+            typingDiv.innerHTML = `
+                <div class="typing-indicator">
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                </div>
+            `;
+
+            indicator.appendChild(avatar);
+            indicator.appendChild(typingDiv);
+            messagesContainer.appendChild(indicator);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function hideTypingIndicator() {
+            const indicator = document.getElementById('typing-indicator');
+            if (indicator) {
+                indicator.remove();
+            }
+        }
+
+        function updateSessionStats(usage, costs) {
+            sessionStats.cost += parseFloat(costs.totalCost);
+            sessionStats.tokens += usage.total_tokens;
+            sessionStats.messages += 1;
+
+            document.getElementById('sessionCost').textContent = `$${sessionStats.cost.toFixed(4)}`;
+            document.getElementById('sessionTokens').textContent = sessionStats.tokens.toLocaleString();
+            document.getElementById('messageCount').textContent = sessionStats.messages;
+        }
+
+        async function trackUsage(usage, costs) {
+            try {
+                await fetch(`${API_URL}/usage/track`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ usage, cost: costs })
+                });
+            } catch (error) {
+                console.error('Failed to track usage:', error);
+            }
+        }
+
+        async function loadUsageStats() {
+            try {
+                const response = await fetch(`${API_URL}/usage/stats`);
+                const stats = await response.json();
+
+                document.getElementById('totalCost').textContent = `$${stats.totalCost}`;
+                document.getElementById('totalTokens').textContent = stats.totalTokens.toLocaleString();
+                document.getElementById('sessionCount').textContent = stats.sessionCount;
+                document.getElementById('avgCost').textContent = `$${stats.averageCostPerSession}`;
+            } catch (error) {
+                console.error('Failed to load stats:', error);
+            }
+        }
+
+        // Document Processing
+        function handleDocumentUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            document.getElementById('fileName').textContent = file.name;
+            document.getElementById('processButton').disabled = false;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                currentDocument = {
+                    name: file.name,
+                    content: e.target.result
+                };
+            };
+            reader.readAsText(file);
+        }
+
+        async function processDocument() {
+            if (!currentDocument) {
+                alert('Please upload a document first');
+                return;
+            }
+
+            const apiKey = localStorage.getItem('henry_api_key');
+            if (!apiKey) {
+                alert('Please add your API key in Settings first!');
+                switchView('settings');
+                return;
+            }
+
+            const action = document.getElementById('documentAction').value;
+            const customRequest = document.getElementById('customRequest').value;
+
+            const content = action === 'custom' ? customRequest : currentDocument.content;
+
+            try {
+                document.getElementById('processButton').disabled = true;
+                document.getElementById('processButton').textContent = 'Processing...';
+
+                const response = await fetch(`${API_URL}/process-document`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        content: currentDocument.content,
+                        action,
+                        apiKey
+                    })
+                });
+
+                const data = await response.json();
+
+                // Show result
+                const resultDiv = document.getElementById('documentResult');
+                const contentDiv = document.getElementById('documentResultContent');
+                
+                const paragraphs = data.result.split('\n\n').filter(p => p.trim());
+                contentDiv.innerHTML = paragraphs.map(p => `<p>${p}</p>`).join('');
+                
+                resultDiv.style.display = 'block';
+
+                // Update stats
+                updateSessionStats(data.usage, data.costs);
+                trackUsage(data.usage, data.costs);
+
+            } catch (error) {
+                alert('Failed to process document. Please try again.');
+            } finally {
+                document.getElementById('processButton').disabled = false;
+                document.getElementById('processButton').textContent = 'Process Document';
+            }
+        }
+    </script>
+</body>
+</html>
