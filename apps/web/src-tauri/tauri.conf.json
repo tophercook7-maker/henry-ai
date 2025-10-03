@@ -1,10 +1,9 @@
 {
   "build": {
-    "beforeDevCommand": "npm run dev",
-    "beforeBuildCommand": "npm run build",
+    "beforeDevCommand": "",
+    "beforeBuildCommand": "",
     "devPath": "http://localhost:5173",
-    "distDir": "../dist",
-    "withGlobalTauri": false
+    "distDir": "../dist"
   },
   "package": {
     "productName": "Henry AI Ultimate",
@@ -19,18 +18,20 @@
       },
       "fs": {
         "all": true,
-        "scope": ["$APP/**", "$RESOURCE/**"]
+        "scope": ["**"]
       },
       "dialog": {
-        "all": true,
-        "open": true,
-        "save": true
+        "all": true
       }
     },
     "bundle": {
       "active": true,
-      "targets": "all",
-      "identifier": "ai.henry.ultimate",
+      "category": "DeveloperTool",
+      "copyright": "",
+      "deb": {
+        "depends": []
+      },
+      "externalBin": [],
       "icon": [
         "icons/32x32.png",
         "icons/128x128.png",
@@ -38,19 +39,18 @@
         "icons/icon.icns",
         "icons/icon.ico"
       ],
-      "resources": ["../../api/*"],
-      "externalBin": [],
-      "copyright": "© 2025 Henry AI",
-      "category": "Productivity",
-      "shortDescription": "Henry AI - Your Ultimate Local AI Assistant",
-      "longDescription": "Henry AI Ultimate is a powerful local AI assistant with natural conversation, document processing, cost tracking, and full file system access. Zero hosting costs - runs completely on your machine!",
-      "deb": {
-        "depends": ["nodejs"]
-      },
+      "identifier": "ai.henry.ultimate",
+      "longDescription": "",
       "macOS": {
+        "entitlements": null,
+        "exceptionDomain": "",
         "frameworks": [],
-        "minimumSystemVersion": "10.13"
+        "providerShortName": null,
+        "signingIdentity": null
       },
+      "resources": [],
+      "shortDescription": "",
+      "targets": "all",
       "windows": {
         "certificateThumbprint": null,
         "digestAlgorithm": "sha256",
@@ -60,15 +60,16 @@
     "security": {
       "csp": null
     },
+    "updater": {
+      "active": false
+    },
     "windows": [
       {
-        "title": "Henry AI Ultimate",
-        "width": 1400,
+        "fullscreen": false,
         "height": 900,
         "resizable": true,
-        "fullscreen": false,
-        "minWidth": 1000,
-        "minHeight": 700
+        "title": "Henry AI Ultimate",
+        "width": 1400
       }
     ]
   }
