@@ -2,11 +2,11 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use std::process::{Command, Child};
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
 use tauri::Manager;
 use std::path::PathBuf;
 
-struct ApiServer(Mutex<Option<Child>>);
+struct ApiServer(Arc<Mutex<Option<Child>>>);
 
 fn get_api_server_path() -> PathBuf {
     // Get the resource directory where we'll bundle the API server
@@ -57,17 +57,21 @@ fn get_platform() -> String {
 }
 
 fn main() {
+    let api_server = Arc::new(Mutex::new(None));
+    let api_server_clone = api_server.clone();
+    
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_dialog::init())
         .invoke_handler(tauri::generate_handler![get_app_version, get_platform])
-        .setup(|app| {
+        .setup(move |app| {
             // Start the API server when the app launches
             match start_api_server() {
                 Ok(child) => {
                     println!("✅ API server started successfully");
-                    app.manage(ApiServer(Mutex::new(Some(child))));
+                    *api_server.lock().unwrap() = Some(child);
+                    app.manage(ApiServer(api_server.clone()));
                 }
                 Err(e) => {
                     eprintln!("❌ Failed to start API server: {}", e);
@@ -76,17 +80,17 @@ fn main() {
             }
             Ok(())
         })
-        .on_window_event(|window, event| {
-            if let tauri::WindowEvent::CloseRequested { .. } = event {
-                // Kill the API server when the window closes
-                if let Ok(mut api_server) = window.state::<ApiServer>().0.lock() {
-                    if let Some(child) = api_server.as_mut() {
+        .build(tauri::generate_context!())
+        .expect("error while running tauri application")
+        .run(move |_app_handle, event| {
+            if let tauri::RunEvent::Exit = event {
+                // Kill the API server when the app exits
+                if let Ok(mut server) = api_server_clone.lock() {
+                    if let Some(child) = server.as_mut() {
                         println!("Stopping API server...");
                         let _ = child.kill();
                     }
                 }
             }
-        })
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        });
 }
