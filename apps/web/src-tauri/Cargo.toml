@@ -13,11 +13,8 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 tauri-build = { version = "2", features = [] }
 
 [dependencies]
-tauri = { version = "2", features = ["protocol-asset"] }
+tauri = { version = "2", features = [] }
 tauri-plugin-shell = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 tokio = { version = "1", features = ["full"] }
-
-[target."cfg(not(any(target_os = &quot;android&quot;, target_os = &quot;ios&quot;)))".dependencies]
-tauri-plugin-shell = "2"
