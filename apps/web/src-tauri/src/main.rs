@@ -79,8 +79,8 @@ fn main() {
         .on_window_event(|window, event| {
             if let tauri::WindowEvent::CloseRequested { .. } = event {
                 // Kill the API server when the window closes
-                if let Some(api_server) = window.state::<ApiServer>().0.lock().ok() {
-                    if let Some(mut child) = api_server.as_ref() {
+                if let Ok(mut api_server) = window.state::<ApiServer>().0.lock() {
+                    if let Some(child) = api_server.as_mut() {
                         println!("Stopping API server...");
                         let _ = child.kill();
                     }
