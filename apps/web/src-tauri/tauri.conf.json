@@ -1,16 +1,32 @@
 {
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "beforeBuildCommand": "npm run build",
+    "devPath": "http://localhost:5173",
+    "distDir": "../dist",
+    "withGlobalTauri": false
+  },
   "package": {
     "productName": "Henry AI Ultimate",
     "version": "1.0.0"
   },
-  "build": {
-    "beforeDevCommand": "npm run dev",
-    "devPath": "http://localhost:5173",
-    "beforeBuildCommand": "npm run build",
-    "distDir": "../dist",
-    "withGlobalTauri": false
-  },
   "tauri": {
+    "allowlist": {
+      "all": false,
+      "shell": {
+        "all": false,
+        "open": true
+      },
+      "fs": {
+        "all": true,
+        "scope": ["$APP/**", "$RESOURCE/**"]
+      },
+      "dialog": {
+        "all": true,
+        "open": true,
+        "save": true
+      }
+    },
     "bundle": {
       "active": true,
       "targets": "all",
@@ -54,23 +70,7 @@
         "minWidth": 1000,
         "minHeight": 700
       }
-    ],
-    "allowlist": {
-      "all": false,
-      "shell": {
-        "all": false,
-        "open": true
-      },
-      "fs": {
-        "all": true,
-        "scope": ["$APP/*", "$RESOURCE/*"]
-      },
-      "dialog": {
-        "all": true,
-        "open": true,
-        "save": true
-      }
-    }
+    ]
   }
 }
 
