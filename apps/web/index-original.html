@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title>Henry AI - Master Writer & Developer</title>
+    <link rel="stylesheet" href="/public/style.css">
+  <script src="https://sites.super.myninja.ai/_assets/ninja-daytona-script.js"></script>
+</head>
+  <body>
+    <div id="app" class="app">
+      <div class="topbar">
+        <button id="btn-toggle" class="toggle" title="Hide/Show sidebar">☰</button>
+        <div class="brand">Henry AI</div>
+        <div class="mode-section">
+          <select id="mode-selector" class="mode-selector">
+            <option value="general">🎯 General</option>
+            <option value="writer">🖋️ Writer</option>
+            <option value="developer">💻 Developer</option>
+          </select>
+        </div>
+        <div class="spacer"></div>
+        <div id="current-project" class="project-status">No project selected</div>
+        <span class="pill">model: <span id="pill-model">–</span></span>
+        <span class="pill">chars: <span id="pill-chars">0</span></span>
+        <span class="pill">$ <span id="pill-cost">0.00</span></span>
+      </div>
+
+      <aside class="sidebar">
+        <h3>Chats</h3>
+        <button class="navbtn" id="btn-new">New Chat</button>
+        <div id="hist"></div>
+
+        <h3>Navigation</h3>
+        <button class="navbtn" id="tab-chat">💬 Chat</button>
+        <button class="navbtn" id="tab-projects">📁 Projects</button>
+        <button class="navbtn" id="tab-settings">⚙️ Settings</button>
+        <button class="navbtn" id="tab-help">❓ Help</button>
+      </aside>
+
+      <main class="main">
+        <div id="panel-chat" class="thread">
+          <div class="msg assistant">
+            <div class="bubble">
+              <h2>👋 Welcome to Enhanced Henry AI!</h2>
+              <p>I'm your master writer and developer assistant. I can help you with:</p>
+              <ul>
+                <li><strong>📚 Writing Projects</strong>: Ebooks, novels, technical docs, research</li>
+                <li><strong>💻 App Development</strong>: Full-stack apps, mobile, desktop software</li>
+                <li><strong>🎯 Project Management</strong>: Planning, structure, implementation</li>
+              </ul>
+              <p><strong>Quick Start:</strong></p>
+              <ul>
+                <li>Select a mode above (Writer/Developer/General)</li>
+                <li>Create a project in the Projects tab</li>
+                <li>Start chatting - I'll provide comprehensive guidance!</li>
+              </ul>
+              <p><em>Enter sends; Shift+Enter makes a newline.</em></p>
+            </div>
+            <div class="bubble-actions">
+              <button class="copy" data-no-chat>Copy</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="panel-projects" class="thread hidden">
+          <div class="msg assistant">
+            <div class="bubble">
+              <h2>📁 Project Management</h2>
+              <p>Create and manage your writing and development projects:</p>
+              
+              <h3>Create New Project</h3>
+              <div class="project-actions">
+                <button id="create-book-project" class="project-btn book-btn">📚 Create Book Project</button>
+                <button id="create-app-project" class="project-btn app-btn">💻 Create App Project</button>
+              </div>
+              
+              <h3>Existing Projects</h3>
+              <div id="projects-list" class="projects-list">
+                <p><em>No projects yet. Create your first project above!</em></p>
+              </div>
+              
+              <h3>Project Features</h3>
+              <ul>
+                <li><strong>Book Projects</strong>: Chapters, research, drafts, outlines</li>
+                <li><strong>App Projects</strong>: Source code, documentation, tests</li>
+                <li><strong>File Management</strong>: Save chat responses directly to projects</li>
+                <li><strong>Organization</strong>: Structured folders for different content types</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <div id="panel-settings" class="thread hidden">
+          <div class="msg assistant"><div class="bubble">
+            <h2>⚙️ Settings</h2>
+            
+            <h3>API Configuration</h3>
+            <label for="inp-api"><strong>API Base URL:</strong></label><br/>
+            <input id="inp-api" type="text" style="width:100%;padding:8px;border-radius:8px;border:1px solid var(--line);background:#0e131b;color:var(--ink);margin:8px 0;" placeholder="http://127.0.0.1:3000"><br/>
+            
+            <label for="inp-key"><strong>OpenAI API Key (optional):</strong></label><br/>
+            <input id="inp-key" type="password" style="width:100%;padding:8px;border-radius:8px;border:1px solid var(--line);background:#0e131b;color:var(--ink);margin:8px 0;" placeholder="sk-proj-…"><br/>
+            
+            <button id="btn-save-settings" class="send" data-no-chat style="margin-top:16px;">Save Settings</button>
+            
+            <h3>Enhanced Features</h3>
+            <ul>
+              <li><strong>Writer Mode</strong>: Specialized prompts for writing projects</li>
+              <li><strong>Developer Mode</strong>: Technical assistance and code generation</li>
+              <li><strong>Project Management</strong>: Organized file structure and saving</li>
+              <li><strong>Advanced Formatting</strong>: Code blocks, markdown support</li>
+            </ul>
+          </div></div>
+        </div>
+
+        <div id="panel-help" class="thread hidden">
+          <div class="msg assistant"><div class="bubble">
+            <h2>❓ Help & Guide</h2>
+            
+            <h3>🚀 Getting Started</h3>
+            <ol>
+              <li><strong>Choose Your Mode</strong>: Select Writer, Developer, or General mode</li>
+              <li><strong>Create a Project</strong>: Go to Projects tab and create a new project</li>
+              <li><strong>Start Chatting</strong>: Ask questions, request help, get guidance</li>
+              <li><strong>Save Content</strong>: Use the Save button on responses to store in your project</li>
+            </ol>
+            
+            <h3>🖋️ Writer Mode Features</h3>
+            <ul>
+              <li>Book and ebook planning and structure</li>
+              <li>Chapter outlines and character development</li>
+              <li>Professional editing assistance</li>
+              <li>Research and fact-checking guidance</li>
+              <li>Publishing industry knowledge</li>
+            </ul>
+            
+            <h3>💻 Developer Mode Features</h3>
+            <ul>
+              <li>Full-stack application development</li>
+              <li>Architecture and design patterns</li>
+              <li>Code generation and debugging</li>
+              <li>Database design and optimization</li>
+              <li>Deployment and DevOps guidance</li>
+            </ul>
+            
+            <h3>⌨️ Keyboard Shortcuts</h3>
+            <ul>
+              <li><strong>Enter</strong>: Send message</li>
+              <li><strong>Shift+Enter</strong>: New line in message</li>
+              <li><strong>Ctrl/Cmd+K</strong>: Focus message input</li>
+            </ul>
+            
+            <h3>💡 Tips</h3>
+            <ul>
+              <li>Be specific about your goals for better assistance</li>
+              <li>Use projects to organize your work</li>
+              <li>Save important responses for future reference</li>
+              <li>Switch modes based on your current task</li>
+            </ul>
+          </div></div>
+        </div>
+
+        <form id="composer" class="composer" autocomplete="off">
+          <textarea id="input" class="input" placeholder="Ask me anything about writing or development..."></textarea>
+          <button id="send" class="send" type="submit">Send</button>
+        </form>
+      </main>
+
+      <div class="footer">Henry AI — Master Writer & Developer Assistant</div>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
